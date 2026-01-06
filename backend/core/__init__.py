@@ -1,23 +1,17 @@
-"""Flow core domain models and utilities."""
+"""Core business logic package."""
 
-from .models import (
-    Transaction,
-    TransactionSource,
-    MerchantProfile,
-    Need,
-    WeatherState,
-    MomentumContext,
-    ExplainabilityContext,
-    Explanation,
+from .momentum import (
+    compute_momentum,
+    generate_momentum_narrative,
+    generate_gentle_suggestions,
+    get_month_bounds,
+    calculate_recent_daily_average,
 )
 
 __all__ = [
-    "Transaction",
-    "TransactionSource",
-    "MerchantProfile",
-    "Need",
-    "WeatherState",
-    "MomentumContext",
-    "ExplainabilityContext",
-    "Explanation",
+    "compute_momentum",
+    "generate_momentum_narrative",
+    "generate_gentle_suggestions",
+    "get_month_bounds",
+    "calculate_recent_daily_average",
 ]

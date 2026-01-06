@@ -7,59 +7,43 @@ their financial momentum through explainable, deterministic logic.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
-# Import routes (to be created)
-# from api.routes import transactions, merchants, momentum, explanations
+from db import init_db
+from api import auth, budget, transactions, bank_statement, momentum
 
-# App lifecycle
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Startup and shutdown events.
-    """
-    # Startup
-    print("🌊 Flow Finance API Starting...")
-    yield
-    # Shutdown
-    print("🌊 Flow Finance API Shutting Down...")
+# Initialize database on startup
+init_db()
 
-
+# Create app
 app = FastAPI(
     title="Flow Finance API",
     description="Personal finance momentum engine - explainable, privacy-first",
     version="0.1.0",
-    lifespan=lifespan,
 )
 
-# CORS middleware for Expo/React Native mobile app
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=["*"],  # Configure for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# Health check endpoint
+# Health check
 @app.get("/health")
 async def health_check():
-    """
-    Health check endpoint.
-    """
+    """Health check endpoint."""
     return {
         "status": "healthy",
-        "message": "🌊 Flow is flowing smoothly"
+        "message": "🌊 Flow is flowing smoothly",
     }
 
 
-# Root endpoint
+# Root
 @app.get("/")
 async def root():
-    """
-    Root endpoint with API information.
-    """
+    """Root endpoint."""
     return {
         "name": "Flow Finance API",
         "version": "0.1.0",
@@ -68,18 +52,15 @@ async def root():
     }
 
 
-# Register route modules (implement routes in separate files)
-# app.include_router(transactions.router, prefix="/api/v1/transactions", tags=["transactions"])
-# app.include_router(merchants.router, prefix="/api/v1/merchants", tags=["merchants"])
-# app.include_router(momentum.router, prefix="/api/v1/momentum", tags=["momentum"])
-# app.include_router(explanations.router, prefix="/api/v1/explanations", tags=["explanations"])
+# Include routers
+app.include_router(auth.router)
+app.include_router(budget.router)
+app.include_router(transactions.router)
+app.include_router(bank_statement.router)
+app.include_router(momentum.router)
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
