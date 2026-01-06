@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from db import init_db
-from api import auth, budget, transactions, bank_statement, momentum
+from api import auth, budget, transactions, bank_statement, momentum, advice
 
 # Initialize database on startup
 init_db()
@@ -58,6 +58,7 @@ app.include_router(budget.router)
 app.include_router(transactions.router)
 app.include_router(bank_statement.router)
 app.include_router(momentum.router)
+app.include_router(advice.router)
 
 
 if __name__ == "__main__":

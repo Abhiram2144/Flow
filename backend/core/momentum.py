@@ -166,20 +166,21 @@ def generate_momentum_narrative(momentum: MomentumData) -> str:
     return f"You're tracking on pace. {momentum.days_remaining} days remaining in the month."
 
 
-def generate_gentle_suggestions(momentum: MomentumData) -> List[str]:
-    """Generate non-judgmental suggestions based on momentum."""
-    suggestions = []
+def generate_advice(momentum: MomentumData) -> str:
+    """
+    Generate ONE calm, non-judgmental sentence of advice.
     
-    if momentum.buffer_days_lost > 3:
-        suggestions.append("Consider reviewing your largest transactions to understand spending patterns.")
+    This is deterministic fallback text if LLM is unavailable.
+    In production, this structured data (MomentumData) would be sent to LLM.
+    LLM must return exactly one sentence.
+    """
+    if momentum.buffer_days_lost > 5:
+        return f"At your current pace, budget runs out in about {max(1, int(momentum.days_remaining - abs(momentum.buffer_days_lost)))} days."
     
-    if momentum.remaining < momentum.budget_amount * 0.2:
-        suggestions.append("You have less than 20% of your budget remaining.")
+    if momentum.buffer_days_lost > 2:
+        return "You're tracking slightly above your daily target with days remaining."
     
-    if momentum.recent_daily > 0:
-        suggestions.append(f"Your recent daily average is ${momentum.recent_daily:.2f}.")
+    if momentum.remaining <= 0:
+        return "You've spent your monthly budget."
     
-    if not suggestions:
-        suggestions.append("Keep tracking your spending to see patterns over time.")
-    
-    return suggestions
+    return "You're tracking on pace with your monthly budget."

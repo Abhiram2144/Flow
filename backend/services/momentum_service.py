@@ -16,7 +16,7 @@ from models.schemas import (
 from core.momentum import (
     compute_momentum,
     generate_momentum_narrative,
-    generate_gentle_suggestions,
+    generate_advice,
 )
 
 
@@ -77,8 +77,6 @@ class TransactionService:
             amount=transaction_data.amount,
             merchant=transaction_data.merchant,
             source=source,
-            category=transaction_data.category,
-            notes=transaction_data.notes,
         )
         db.add(transaction)
         db.commit()
@@ -160,7 +158,6 @@ class BankStatementService:
                     date=txn_date,
                     amount=row.amount,
                     merchant=row.merchant,
-                    category=row.category,
                 )
                 db.add(txn)
                 count += 1
@@ -212,13 +209,11 @@ class MomentumService:
             recent_transactions=recent_txns_dicts,
         )
 
-        # Generate narrative (fallback is deterministic, LLM integration optional)
-        narrative = generate_momentum_narrative(momentum)
-        suggestions = generate_gentle_suggestions(momentum)
+        # Generate advice (single sentence only)
+        advice = generate_advice(momentum)
 
         return MomentumResponse(
             month=month_str,
             momentum=momentum,
-            narrative=narrative,
-            gentle_suggestions=suggestions,
+            advice=advice,
         )

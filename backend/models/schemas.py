@@ -51,8 +51,6 @@ class TransactionCreate(BaseModel):
     date: datetime
     amount: float = Field(..., gt=0)
     merchant: str = Field(..., min_length=1)
-    category: Optional[str] = None
-    notes: Optional[str] = None
 
 
 class TransactionResponse(BaseModel):
@@ -63,8 +61,6 @@ class TransactionResponse(BaseModel):
     amount: float
     merchant: str
     source: str
-    category: Optional[str]
-    notes: Optional[str]
     created_at: datetime
 
     class Config:
@@ -76,7 +72,6 @@ class BankStatementRow(BaseModel):
     date: str  # Expected format: YYYY-MM-DD
     amount: float
     merchant: str
-    category: Optional[str] = None
 
 
 class BankStatementUpload(BaseModel):
@@ -104,5 +99,4 @@ class MomentumResponse(BaseModel):
     """Complete momentum response."""
     month: str
     momentum: MomentumData
-    narrative: str  # Human-readable explanation (from LLM or fallback)
-    gentle_suggestions: List[str]
+    advice: str  # Single calm sentence (no arrays, no multi-sentence advice)

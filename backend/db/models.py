@@ -51,8 +51,6 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     merchant = Column(String(255), nullable=False, index=True)
     source = Column(String(20), nullable=False)  # "manual" or "bank"
-    category = Column(String(100), nullable=True)
-    notes = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
@@ -68,7 +66,6 @@ class BankTransaction(Base):
     date = Column(DateTime, nullable=False, index=True)
     amount = Column(Float, nullable=False)
     merchant = Column(String(255), nullable=False)
-    category = Column(String(100), nullable=True)
     imported_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships

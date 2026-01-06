@@ -80,11 +80,11 @@ API docs: `http://localhost:8000/docs`
 
 - `POST /bank-statement/upload` - Upload CSV file
 
-CSV format:
+CSV format (header required):
 ```csv
-date,amount,merchant,category
-2024-01-15,45.50,Whole Foods,groceries
-2024-01-16,12.00,Gas Station,transport
+date,amount,merchant
+2024-01-15,45.50,Whole Foods
+2024-01-16,12.00,Gas Station
 ```
 
 ### Momentum
@@ -105,8 +105,19 @@ Response:
     "buffer_days_lost": 1.2,
     "confidence": "high"
   },
-  "narrative": "You're tracking slightly above your daily target...",
-  "gentle_suggestions": [...]
+  "advice": "You're tracking slightly above your daily target with days remaining."
+}
+```
+
+### Advice
+
+- `GET /advice/current` - Get single sentence of financial advice
+
+Response:
+```json
+{
+  "month": "2024-01",
+  "advice": "You're tracking slightly above your daily target with days remaining."
 }
 ```
 

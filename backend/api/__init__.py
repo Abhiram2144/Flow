@@ -1,6 +1,6 @@
 """API routes package."""
 
-from . import auth, budget, transactions, bank_statement, momentum
+from . import auth, budget, transactions, bank_statement, momentum, advice
 
 __all__ = [
     "auth",
@@ -8,4 +8,5 @@ __all__ = [
     "transactions",
     "bank_statement",
     "momentum",
+    "advice",
 ]

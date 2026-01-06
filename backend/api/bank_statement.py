@@ -25,9 +25,10 @@ def upload_bank_statement(
     """
     Upload bank statement CSV.
     
-    Expected CSV format:
-    date,amount,merchant,category
-    2024-01-15,45.50,Whole Foods,groceries
+    Expected CSV format (header required):
+    date,amount,merchant
+    2024-01-15,45.50,Whole Foods
+    2024-01-16,12.00,Gas Station
     """
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="File must be CSV format")
@@ -43,7 +44,6 @@ def upload_bank_statement(
                     date=row_dict["date"],
                     amount=float(row_dict["amount"]),
                     merchant=row_dict["merchant"],
-                    category=row_dict.get("category"),
                 )
                 rows.append(row)
             except (KeyError, ValueError) as e:
