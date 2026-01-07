@@ -3,7 +3,7 @@ Core momentum calculation logic.
 Pure business logic - no database access, no HTTP concerns.
 """
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import List, Tuple
 from models.schemas import MomentumData
 
@@ -24,7 +24,7 @@ def get_month_bounds(year: int, month: int) -> Tuple[date, date, int, int]:
         end = date(year, month + 1, 1)
     
     # Back up one day to get last day of month
-    end = date(end.year, end.month, end.day - 1)
+    end = end - timedelta(days=1)
     
     days_in_month = (end - start).days + 1
     today = date.today()
