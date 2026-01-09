@@ -23,6 +23,7 @@ class User(Base):
     budgets = relationship("Budget", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
     bank_transactions = relationship("BankTransaction", back_populates="user", cascade="all, delete-orphan")
+    spending_profile = relationship("SpendingProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 
 class Budget(Base):
@@ -70,3 +71,20 @@ class BankTransaction(Base):
 
     # Relationships
     user = relationship("User", back_populates="bank_transactions")
+
+
+class SpendingProfile(Base):
+    """Derived spending profile from bank transactions (bootstrap data)."""
+    __tablename__ = "spending_profiles"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    avg_daily_spend = Column(Float, nullable=False)
+    variance = Column(Float, nullable=False)
+    bias_factor = Column(Float, nullable=False)  # early vs late month bias
+    calculated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    bank_data_imported_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # For decay rule
+
+    # Relationships
+    user = relationship("User", back_populates="spending_profile")
+

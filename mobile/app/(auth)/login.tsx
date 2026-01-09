@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { login, ApiError } from '../../lib/api';
 import { setToken } from '../../lib/auth';
@@ -15,7 +15,9 @@ export default function LoginScreen() {
     try {
       const { access_token } = await login(email.trim(), password);
       await setToken(access_token);
-      router.replace('/');
+      Alert.alert('Success', 'Welcome back!', [
+        { text: 'OK', onPress: () => router.replace('/(main)' as any) }
+      ]);
     } catch (err) {
       const status = (err as ApiError).status;
       setError(status === 401 ? 'Invalid credentials' : 'Login failed');
@@ -23,8 +25,9 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <View style={styles.content}>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <View style={styles.content}>
         <Text style={styles.appName}>Flow</Text>
         <Text style={styles.subtitle}>Stay within your budget, calmly.</Text>
 
@@ -59,28 +62,30 @@ export default function LoginScreen() {
           <Text style={styles.link}>Create an account</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#0B0D0F' },
   content: { flex: 1, padding: 24, justifyContent: 'center' },
-  appName: { fontSize: 36, fontWeight: '700', color: '#000', marginBottom: 12, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#666', marginBottom: 48, textAlign: 'center' },
+  appName: { fontSize: 36, fontWeight: '700', color: '#EDE7DB', marginBottom: 12, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: '#B8B2A7', marginBottom: 48, textAlign: 'center' },
   form: { marginBottom: 32 },
-  input: { 
-    borderWidth: 1, 
-    borderColor: '#ddd', 
-    borderRadius: 6, 
-    padding: 16, 
-    fontSize: 16, 
+  input: {
+    borderWidth: 1,
+    borderColor: '#2A2E35',
+    borderRadius: 6,
+    padding: 16,
+    fontSize: 16,
     marginBottom: 16,
-    backgroundColor: '#fff',
-    color: '#000',
+    backgroundColor: '#111417',
+    color: '#EDE7DB',
   },
-  button: { backgroundColor: '#000', padding: 16, borderRadius: 6, alignItems: 'center', marginTop: 8 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#333', marginBottom: 12, fontSize: 13, textAlign: 'center' },
-  link: { color: '#666', fontSize: 14, textAlign: 'center' },
+  button: { backgroundColor: '#D4AF37', padding: 16, borderRadius: 6, alignItems: 'center', marginTop: 8 },
+  buttonText: { color: '#0B0D0F', fontSize: 16, fontWeight: '600' },
+  error: { color: '#EDE7DB', marginBottom: 12, fontSize: 13, textAlign: 'center' },
+  link: { color: '#B8B2A7', fontSize: 14, textAlign: 'center' },
 });

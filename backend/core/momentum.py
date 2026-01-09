@@ -82,10 +82,15 @@ def compute_momentum(
     total_spent: float,
     year: int,
     month: int,
-    recent_transactions: List[dict]
+    recent_transactions: List[dict],
 ) -> MomentumData:
     """
     Compute momentum deterministically.
+    
+    Confidence Rules (DETERMINISTIC):
+    - <3 recent transactions: "low"
+    - 3-9 recent transactions: "medium"
+    - ≥10 recent transactions: "high"
     
     Args:
         budget_amount: Monthly budget
@@ -119,9 +124,10 @@ def compute_momentum(
     else:
         buffer_days_lost = 0.0
     
-    # Confidence: based on number of recent transactions
+    # Confidence: deterministic based on transaction count
+    # Rule: <3="low", 3-9="medium", ≥10="high"
     num_recent = len(recent_transactions)
-    if num_recent >= 7:
+    if num_recent >= 10:
         confidence = "high"
     elif num_recent >= 3:
         confidence = "medium"
@@ -168,19 +174,34 @@ def generate_momentum_narrative(momentum: MomentumData) -> str:
 
 def generate_advice(momentum: MomentumData) -> str:
     """
-    Generate ONE calm, non-judgmental sentence of advice.
+    Generate ONE calm, deterministic sentence of advice.
     
-    This is deterministic fallback text if LLM is unavailable.
-    In production, this structured data (MomentumData) would be sent to LLM.
-    LLM must return exactly one sentence.
+    CONSTRAINTS (ENFORCED):
+    - Must be exactly one sentence (ends with period)
+    - Must be non-judgmental and conditional
+    - Must NOT invent numbers (use only categories: "few days", "about a week", etc.)
+    - Must NOT reference future months
+    - Must NOT contain commands (no "you should" or imperatives)
+    - Data comes from structured MomentumData only
+    
+    Returns:
+        String - exactly one calm, informative sentence
     """
-    if momentum.buffer_days_lost > 5:
-        return f"At your current pace, budget runs out in about {max(1, int(momentum.days_remaining - abs(momentum.buffer_days_lost)))} days."
-    
-    if momentum.buffer_days_lost > 2:
-        return "You're tracking slightly above your daily target with days remaining."
-    
+    # Rule 1: Budget exceeded
     if momentum.remaining <= 0:
         return "You've spent your monthly budget."
     
+    # Rule 2: Significant overspend (more than 5 days of buffer lost)
+    if momentum.buffer_days_lost > 5:
+        return "At your current pace, budget runs out before month end."
+    
+    # Rule 3: Moderate overspend (2-5 days of buffer lost)
+    if momentum.buffer_days_lost > 2:
+        return "You're tracking slightly above your daily target."
+    
+    # Rule 4: Well under budget (more than 5 days ahead)
+    if momentum.buffer_days_lost < -5:
+        return "You're well below your daily target."
+    
+    # Rule 5: Default - on pace
     return "You're tracking on pace with your monthly budget."

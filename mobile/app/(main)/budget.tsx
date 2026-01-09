@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { setBudget, ApiError } from '../../lib/api';
 
@@ -17,7 +17,9 @@ export default function BudgetScreen() {
     }
     try {
       await setBudget(value);
-      router.replace('/');
+      Alert.alert('Success', 'Budget set successfully!', [
+        { text: 'OK', onPress: () => router.replace('/') }
+      ]);
     } catch (err) {
       const status = (err as ApiError).status;
       if (status === 401) {
@@ -29,8 +31,9 @@ export default function BudgetScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <View style={styles.content}>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <View style={styles.content}>
         <Text style={styles.heading}>Set your monthly budget</Text>
 
         <View style={styles.form}>
@@ -47,30 +50,32 @@ export default function BudgetScreen() {
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={onSubmit}>
+        <TouchableOpacity style={styles.button} onPress={onSubmit} activeOpacity={0.8}>
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#0B0D0F' },
   content: { flex: 1, padding: 24, paddingTop: 40, justifyContent: 'flex-start' },
-  heading: { fontSize: 24, fontWeight: '600', color: '#000', marginBottom: 48 },
+  heading: { fontSize: 24, fontWeight: '600', color: '#EDE7DB', marginBottom: 48 },
   form: { marginBottom: 64 },
-  largeInput: { 
-    fontSize: 48, 
+  largeInput: {
+    fontSize: 48,
     fontWeight: '600',
-    color: '#000',
+    color: '#EDE7DB',
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#2A2E35',
     paddingBottom: 8,
   },
-  helperText: { fontSize: 13, color: '#999' },
-  button: { backgroundColor: '#000', padding: 16, borderRadius: 6, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#333', marginTop: 12, fontSize: 13 },
+  helperText: { fontSize: 13, color: '#B8B2A7' },
+  button: { backgroundColor: '#D4AF37', padding: 16, borderRadius: 6, alignItems: 'center' },
+  buttonText: { color: '#0B0D0F', fontSize: 16, fontWeight: '600' },
+  error: { color: '#EDE7DB', marginTop: 12, fontSize: 13 },
 });

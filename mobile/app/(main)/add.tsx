@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { addTransaction, ApiError } from '../../lib/api';
+import Navbar from '../../components/navbar';
 
 export default function AddTransactionScreen() {
   const router = useRouter();
@@ -19,7 +20,9 @@ export default function AddTransactionScreen() {
     }
     try {
       await addTransaction({ amount: value, merchant: merchant.trim(), date });
-      router.back();
+      Alert.alert('Success', 'Transaction added!', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
     } catch (err) {
       const status = (err as ApiError).status;
       if (status === 401) {
@@ -31,80 +34,76 @@ export default function AddTransactionScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>← Back</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <Navbar />
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <View style={styles.content}>
+          <Text style={styles.heading}>Add expense</Text>
 
-      <View style={styles.content}>
-        <Text style={styles.heading}>Add expense</Text>
-
-        <View style={styles.form}>
-          <TextInput
-            style={styles.amountInput}
-            placeholder="0"
-            placeholderTextColor="#ccc"
-            keyboardType="decimal-pad"
-            value={amount}
+          <View style={styles.form}>
+            <TextInput
+              style={styles.amountInput}
+              placeholder="0"
+              placeholderTextColor="#ccc"
+              keyboardType="decimal-pad"
+              value={amount}
             onChangeText={setAmount}
-          />
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Merchant"
-            placeholderTextColor="#999"
-            value={merchant}
-            onChangeText={setMerchant}
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Merchant"
+              placeholderTextColor="#999"
+              value={merchant}
+              onChangeText={setMerchant}
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor="#999"
-            value={date}
-            onChangeText={setDate}
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor="#999"
+              value={date}
+              onChangeText={setDate}
+            />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+          </View>
+
+          <TouchableOpacity style={styles.button} onPress={onSave} activeOpacity={0.8}>
+            <Text style={styles.buttonText}>Save</Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.button} onPress={onSave}>
-          <Text style={styles.buttonText}>Save</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { padding: 24, paddingBottom: 12 },
-  backButton: { fontSize: 16, color: '#000', fontWeight: '500' },
-  content: { flex: 1, padding: 24, paddingTop: 0, justifyContent: 'flex-start' },
-  heading: { fontSize: 24, fontWeight: '600', color: '#000', marginBottom: 32 },
+  container: { flex: 1, backgroundColor: '#0B0D0F' },
+  flex: { flex: 1 },
+  content: { flex: 1, padding: 24, justifyContent: 'flex-start' },
+  heading: { fontSize: 24, fontWeight: '600', color: '#EDE7DB', marginBottom: 32 },
   form: { marginBottom: 40 },
-  amountInput: { 
-    fontSize: 40, 
+  amountInput: {
+    fontSize: 40,
     fontWeight: '600',
-    color: '#000',
+    color: '#EDE7DB',
     marginBottom: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#2A2E35',
     paddingBottom: 8,
   },
-  input: { 
-    borderWidth: 1, 
-    borderColor: '#ddd', 
-    borderRadius: 6, 
-    padding: 14, 
-    fontSize: 16, 
+  input: {
+    borderWidth: 1,
+    borderColor: '#2A2E35',
+    borderRadius: 6,
+    padding: 14,
+    fontSize: 16,
     marginBottom: 16,
-    backgroundColor: '#fff',
-    color: '#000',
+    backgroundColor: '#111417',
+    color: '#EDE7DB',
   },
-  button: { backgroundColor: '#000', padding: 16, borderRadius: 6, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#333', marginTop: 12, fontSize: 13 },
+  button: { backgroundColor: '#D4AF37', padding: 16, borderRadius: 6, alignItems: 'center' },
+  buttonText: { color: '#0B0D0F', fontSize: 16, fontWeight: '600' },
+  error: { color: '#EDE7DB', marginTop: 12, fontSize: 13 },
 });
