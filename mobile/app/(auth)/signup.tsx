@@ -17,9 +17,16 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios'); // Keep open on iOS
-    if (selectedDate) {
+    // Close picker on Android when date is selected or dismissed
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate && event.type === 'set') {
       setDob(selectedDate);
+      // Close picker on iOS after selection
+      if (Platform.OS === 'ios') {
+        setShowDatePicker(false);
+      }
     }
   };
 
@@ -69,11 +76,18 @@ export default function SignupScreen() {
     setLoading(true);
     try {
       await register(email.trim(), password);
-      // Supabase session is now set automatically
-      // Root layout will detect session and redirect to /(main)/(tabs)
-      Alert.alert('Success', 'Account created! Please check your email to verify your account.', [
-        { text: 'OK' }
-      ]);
+      setLoading(false);
+      // Show success message and navigate to login
+      Alert.alert(
+        'Success', 
+        'Account created! Please check your email to verify your account, then sign in.',
+        [
+          { 
+            text: 'OK',
+            onPress: () => router.replace('/(auth)/login')
+          }
+        ]
+      );
     } catch (err: any) {
       setLoading(false);
       if (err.message?.includes('already registered')) {
