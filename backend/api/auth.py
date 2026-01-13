@@ -11,7 +11,7 @@ import bcrypt
 import os
 
 from db import get_db
-from db.models import User
+from db.models import User, Budget
 from models.schemas import UserCreate, UserLogin, Token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -86,6 +86,16 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Create an initial budget for the current month (£0)
+    current_month = datetime.utcnow().strftime("%Y-%m")
+    initial_budget = Budget(
+        user_id=user.id,
+        month=current_month,
+        total_budget=0.0,  # Start with £0; user will update it
+    )
+    db.add(initial_budget)
+    db.commit()
 
     # Generate token
     access_token = create_access_token(

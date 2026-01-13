@@ -1,29 +1,18 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { clearToken } from '../lib/auth';
-import { useRouter } from 'expo-router';
 
 interface NavbarProps {
-  onLogout?: () => void;
-  onMenuPress?: () => void;
+  onMenuPress: () => void;
 }
 
-export default function Navbar({ onLogout, onMenuPress }: NavbarProps) {
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await clearToken();
-    if (onLogout) {
-      onLogout();
-    }
-    router.replace('/(auth)/login' as any);
-  };
-
+export default function Navbar({ onMenuPress }: NavbarProps) {
   return (
     <View style={styles.navbar}>
-      <Text style={styles.title}>Flow</Text>
-      <TouchableOpacity onPress={onMenuPress ?? handleLogout} activeOpacity={0.7}>
-        <Text style={styles.logout}>{onMenuPress ? 'Menu' : 'Logout'}</Text>
+      <Text style={styles.logo}>Flow</Text>
+      <TouchableOpacity onPress={onMenuPress} style={styles.menuButton}>
+        <View style={styles.menuLine} />
+        <View style={styles.menuLine} />
+        <View style={styles.menuLine} />
       </TouchableOpacity>
     </View>
   );
@@ -31,22 +20,28 @@ export default function Navbar({ onLogout, onMenuPress }: NavbarProps) {
 
 const styles = StyleSheet.create({
   navbar: {
-    height: 56,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     backgroundColor: '#0B0D0F',
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1E24',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    borderBottomColor: '#1a1d21',
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
+  logo: {
+    fontSize: 24,
+    fontWeight: '700',
     color: '#D4AF37',
   },
-  logout: {
-    fontSize: 14,
-    color: '#B8B2A7',
+  menuButton: {
+    padding: 8,
+    gap: 4,
+  },
+  menuLine: {
+    width: 24,
+    height: 2,
+    backgroundColor: '#EDE7DB',
+    borderRadius: 1,
   },
 });

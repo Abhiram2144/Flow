@@ -26,7 +26,7 @@ class BudgetService:
 
     @staticmethod
     def get_or_create_current_budget(db: Session, user_id: str, total_budget: float) -> Budget:
-        """Get budget for current month, or create if doesn't exist."""
+        """Get budget for current month, or create if doesn't exist. Updates if exists."""
         today = date.today()
         month_str = today.strftime("%Y-%m")
 
@@ -44,9 +44,12 @@ class BudgetService:
                 total_budget=total_budget,
             )
             db.add(budget)
-            db.commit()
-            db.refresh(budget)
+        else:
+            # Update existing budget amount
+            budget.total_budget = total_budget
 
+        db.commit()
+        db.refresh(budget)
         return budget
 
     @staticmethod

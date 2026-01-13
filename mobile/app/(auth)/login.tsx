@@ -1,26 +1,36 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { login, ApiError } from '../../lib/api';
-import { setToken } from '../../lib/auth';
+import { login } from '@/lib/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
     setError('');
+    if (!email.trim() || !password) {
+      setError('Please enter email and password');
+      return;
+    }
+    
+    setLoading(true);
     try {
-      const { access_token } = await login(email.trim(), password);
-      await setToken(access_token);
-      Alert.alert('Success', 'Welcome back!', [
-        { text: 'OK', onPress: () => router.replace('/(main)' as any) }
-      ]);
-    } catch (err) {
-      const status = (err as ApiError).status;
-      setError(status === 401 ? 'Invalid credentials' : 'Login failed');
+      await login(email.trim(), password);
+      // Supabase session is now set automatically
+      // Root layout will detect session and redirect to /(main)/(tabs)
+    } catch (err: any) {
+      setLoading(false);
+      if (err.message?.includes('Invalid login')) {
+        setError('Invalid email or password');
+      } else if (err.message?.includes('Email not confirmed')) {
+        setError('Please verify your email address');
+      } else {
+        setError(err.message || 'Login failed. Please try again.');
+      }
     }
   };
 
@@ -40,6 +50,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             value={email}
             onChangeText={setEmail}
+            editable={!loading}
           />
 
           <TextInput
@@ -49,16 +60,21 @@ export default function LoginScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+            editable={!loading}
           />
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <TouchableOpacity style={styles.button} onPress={onSubmit}>
-            <Text style={styles.buttonText}>Sign In</Text>
+          <TouchableOpacity 
+            style={[styles.button, loading && styles.buttonDisabled]} 
+            onPress={onSubmit}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup' as any)}>
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup' as any)} disabled={loading}>
           <Text style={styles.link}>Create an account</Text>
         </TouchableOpacity>
       </View>
@@ -85,6 +101,7 @@ const styles = StyleSheet.create({
     color: '#EDE7DB',
   },
   button: { backgroundColor: '#D4AF37', padding: 16, borderRadius: 6, alignItems: 'center', marginTop: 8 },
+  buttonDisabled: { opacity: 0.5 },
   buttonText: { color: '#0B0D0F', fontSize: 16, fontWeight: '600' },
   error: { color: '#EDE7DB', marginBottom: 12, fontSize: 13, textAlign: 'center' },
   link: { color: '#B8B2A7', fontSize: 14, textAlign: 'center' },

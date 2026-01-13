@@ -1,43 +1,58 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { Session } from '@supabase/supabase-js';
 
-import { getToken } from '../lib/auth';
+import { supabase } from '../lib/supabase';
+
+const PUBLIC_SEGMENTS = ['(auth)', 'splash', 'loading', 'onboarding'];
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
-  const [token, setTokenState] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const segments = useSegments();
   const router = useRouter();
 
-  const loadToken = async () => {
-    const stored = await getToken();
-    setTokenState(stored);
-    setReady(true);
-  };
-
+  // Initialize and listen to auth state changes
   useEffect(() => {
-    loadToken();
-  }, []);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setReady(true);
+    });
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadToken();
-    }, [])
-  );
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!ready) return;
-    const inAuth = (segments as string[]).includes('(auth)');
-    if (!token && !inAuth) router.replace('/(auth)/login' as any);
-    else if (token && inAuth) router.replace('/');
-  }, [ready, token, segments, router]);
+    
+    const currentSegments = segments as string[];
+    const first = currentSegments[0];
+    const inPublic = PUBLIC_SEGMENTS.includes(first as string);
+    const inAuth = currentSegments.includes('(auth)');
+
+    // Add a small delay to allow navigation to complete before checking
+    const timer = setTimeout(() => {
+      if (!session && !inPublic && first !== '(auth)') {
+        router.replace('/splash' as any);
+      } else if (session && inAuth) {
+        router.replace('/(main)/(tabs)' as any);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [ready, session, segments, router]);
 
   if (!ready) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f7f7f7' }}>
-        <ActivityIndicator />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0B0D0F' }}>
+        <ActivityIndicator color="#D4AF37" />
       </View>
     );
   }
