@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, SafeAreaView, Alert, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, SafeAreaView, Alert, Platform, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { register } from '@/lib/auth';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -29,6 +29,11 @@ export default function SignupScreen() {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  const openPrivacyPolicy = () => {
+    // Replace with your actual privacy policy URL
+    Linking.openURL('https://yourapp.com/privacy-policy');
   };
 
   const onSubmit = async () => {
@@ -150,16 +155,21 @@ export default function SignupScreen() {
             />
           )}
 
-          <TouchableOpacity 
-            style={styles.checkboxContainer}
-            onPress={() => setAgreeToPolicy(!agreeToPolicy)}
-            disabled={loading}
-          >
-            <View style={[styles.checkbox, agreeToPolicy && styles.checkboxChecked]}>
-              {agreeToPolicy && <Text style={styles.checkmark}>✓</Text>}
-            </View>
-            <Text style={styles.checkboxLabel}>I agree to privacy and policy</Text>
-          </TouchableOpacity>
+          <View style={styles.checkboxContainer}>
+            <TouchableOpacity 
+              onPress={() => setAgreeToPolicy(!agreeToPolicy)}
+              disabled={loading}
+              style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+            >
+              <View style={[styles.checkbox, agreeToPolicy && styles.checkboxChecked]}>
+                {agreeToPolicy && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxLabel}>I agree to privacy and policy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={openPrivacyPolicy} disabled={loading}>
+              <Text style={styles.policyLink}>Read</Text>
+            </TouchableOpacity>
+          </View>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -218,7 +228,8 @@ const styles = StyleSheet.create({
   },
   checkboxChecked: { backgroundColor: '#D4AF37', borderColor: '#D4AF37' },
   checkmark: { color: '#0B0D0F', fontSize: 14, fontWeight: 'bold' },
-  checkboxLabel: { color: '#B8B2A7', fontSize: 14 },
+  checkboxLabel: { color: '#B8B2A7', fontSize: 14, flex: 1 },
+  policyLink: { color: '#D4AF37', fontSize: 14, fontWeight: '600', marginLeft: 8 },
   error: { color: '#EDE7DB', marginBottom: 12, fontSize: 13, textAlign: 'center' },
   link: { color: '#B8B2A7', fontSize: 14, textAlign: 'center' },
 });
