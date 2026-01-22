@@ -1,225 +1,211 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Line, Circle, Polyline, Text as SvgText, Path } from 'react-native-svg';
+import { Dimensions, Text, View, StyleSheet } from 'react-native';
+import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
+import { AppColors } from '@/constants/theme';
 
-type WeeklyData = {
-  week: number;
-  weekLabel: string;
-  spent: number;
-};
+interface Transaction {
+  date: string;
+  amount: number;
+}
 
-type Props = {
-  transactions: Array<{ date: string; amount: number }>;
-  budget: number;
-};
+interface MomentumChartProps {
+  transactions: Transaction[];
+  budgetStartDate: Date;
+}
 
-export default function MomentumChart({ transactions, budget }: Props) {
-  const screenWidth = Dimensions.get('window').width;
-  const chartWidth = screenWidth - 80;
-  const chartHeight = 200;
-  const padding = { top: 20, right: 40, bottom: 40, left: 50 };
-
-  const weeklyData = useMemo(() => {
-    if (transactions.length === 0) return [];
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // Check if we have transactions from previous month
-    const oldestTx = transactions.length > 0 
-      ? new Date(transactions[transactions.length - 1].date)
-      : today;
-    
-    // Start from beginning of oldest transaction's month or current month
-    const startMonth = new Date(oldestTx.getFullYear(), oldestTx.getMonth(), 1);
-    
-    // Calculate weeks from start to today
-    const weeks: WeeklyData[] = [];
-    let currentWeekStart = new Date(startMonth);
-    let weekNumber = 1;
-
-    while (currentWeekStart <= today) {
-      const weekEnd = new Date(currentWeekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-      const effectiveEnd = weekEnd > today ? today : weekEnd;
-
-      // Sum transactions for this week
-      const weekSpent = transactions
-        .filter((tx) => {
-          const txDate = new Date(tx.date);
-          return txDate >= currentWeekStart && txDate <= effectiveEnd;
-        })
-        .reduce((sum, tx) => sum + tx.amount, 0);
-
-      weeks.push({
-        week: weekNumber,
-        weekLabel: `W${weekNumber}`,
-        spent: weekSpent,
-      });
-
-      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-      weekNumber++;
-    }
-
-    return weeks;
-  }, [transactions]);
-
-  const { maxY, yAxisSteps } = useMemo(() => {
-    if (weeklyData.length === 0) return { maxY: 100, yAxisSteps: [0, 25, 50, 75, 100] };
-
-    const maxSpent = Math.max(...weeklyData.map((w) => w.spent));
-    const roundedMax = Math.ceil(maxSpent / 50) * 50 || 100;
-    const steps = [0, roundedMax / 4, roundedMax / 2, (3 * roundedMax) / 4, roundedMax];
-    return { maxY: roundedMax, yAxisSteps: steps };
-  }, [weeklyData]);
-
-  const chartData = useMemo(() => {
-    if (weeklyData.length === 0) return { points: '', dots: [], pathData: '', transactionDots: [] };
-
-    const innerWidth = chartWidth - padding.left - padding.right;
-    const innerHeight = chartHeight - padding.top - padding.bottom;
-
-    // Get time range for positioning
-    const oldestTx = transactions.length > 0 ? new Date(transactions[transactions.length - 1].date) : new Date();
-    const startTime = new Date(oldestTx.getFullYear(), oldestTx.getMonth(), 1).getTime();
-    const endTime = new Date().getTime();
-    const timeRange = endTime - startTime;
-
-    const points = weeklyData
-      .map((week, i) => {
-        const x = padding.left + (i / Math.max(1, weeklyData.length - 1)) * innerWidth;
-        const y = padding.top + innerHeight - (week.spent / maxY) * innerHeight;
-        return `${x},${y}`;
-      })
-      .join(' ');
-
-    const dots = weeklyData.map((week, i) => {
-      const x = padding.left + (i / Math.max(1, weeklyData.length - 1)) * innerWidth;
-      const y = padding.top + innerHeight - (week.spent / maxY) * innerHeight;
-      return { x, y, week: week.weekLabel, spent: week.spent };
-    });
-
-    // Create curved path using cubic bezier curves
-    let pathData = '';
-    if (dots.length > 0) {
-      pathData = `M ${dots[0].x},${dots[0].y}`;
-      
-      for (let i = 0; i < dots.length - 1; i++) {
-        const current = dots[i];
-        const next = dots[i + 1];
-        const controlPointOffset = (next.x - current.x) * 0.5;
-        
-        // Cubic bezier curve
-        pathData += ` C ${current.x + controlPointOffset},${current.y} ${next.x - controlPointOffset},${next.y} ${next.x},${next.y}`;
-      }
-    }
-
-    // Calculate individual transaction positions
-    const transactionDots = transactions.map(tx => {
-      const txTime = new Date(tx.date).getTime();
-      const timeOffset = txTime - startTime;
-      const x = padding.left + (timeOffset / timeRange) * innerWidth;
-      const y = padding.top + innerHeight - (tx.amount / maxY) * innerHeight;
-      return { x, y, amount: tx.amount, date: tx.date };
-    });
-
-    return { points, dots, pathData, transactionDots };
-  }, [weeklyData, maxY, chartWidth, chartHeight, padding, transactions]);
-
-  if (transactions.length === 0) {
+export function MomentumChart({ transactions, budgetStartDate }: MomentumChartProps) {
+  if (!transactions || transactions.length === 0) {
     return (
-      <View style={[styles.container, { height: chartHeight }]}>
+      <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>Add transactions to see momentum</Text>
       </View>
     );
   }
 
+  const screenWidth = Dimensions.get('window').width;
+  const chartWidth = screenWidth - 80;
+  const chartHeight = 200;
+  const padding = { top: 20, right: 40, bottom: 40, left: 50 };
+
+  // Group transactions by day (days since budget start)
+  const dailyData = groupByDay(transactions, budgetStartDate);
+  
+  // Calculate chart dimensions
+  const plotWidth = chartWidth - padding.left - padding.right;
+  const plotHeight = chartHeight - padding.top - padding.bottom;
+  
+  const maxAmount = Math.max(...dailyData.map(d => d.amount), 0);
+  const ySteps = 5;
+  const yStepValue = Math.ceil(maxAmount / ySteps);
+  
+  // Generate points for the line
+  const points = dailyData.map((day, index) => {
+    const x = padding.left + (index / (dailyData.length - 1 || 1)) * plotWidth;
+    const y = padding.top + plotHeight - (day.amount / (yStepValue * ySteps)) * plotHeight;
+    return { x, y, amount: day.amount, day: day.day };
+  });
+
+  // Create smooth curve path
+  const pathData = createSmoothPath(points);
+
   return (
     <View style={styles.container}>
       <Svg width={chartWidth} height={chartHeight}>
-        {/* Y-axis labels */}
-        {yAxisSteps.map((step, i) => {
-          const y = padding.top + (chartHeight - padding.top - padding.bottom) * (1 - step / maxY);
-          return (
-            <SvgText
-              key={i}
-              x={padding.left - 8}
-              y={y + 4}
-              fontSize="9"
-              fill="#B8B2A7"
-              textAnchor="end"
-            >
-              {step === 0 ? '0' : `£${step}`}
-            </SvgText>
-          );
-        })}
-
         {/* Grid lines */}
-        {yAxisSteps.map((step, i) => {
-          const y = padding.top + (chartHeight - padding.top - padding.bottom) * (1 - step / maxY);
+        {Array.from({ length: ySteps + 1 }).map((_, i) => {
+          const y = padding.top + (i / ySteps) * plotHeight;
           return (
             <Line
-              key={i}
+              key={`grid-${i}`}
               x1={padding.left}
               y1={y}
               x2={chartWidth - padding.right}
               y2={y}
-              stroke="#1A1E24"
+              stroke={AppColors.border}
               strokeWidth="1"
             />
           );
         })}
 
-        {/* Line chart with smooth curves */}
-        {chartData.pathData && (
-          <Path
-            d={chartData.pathData}
-            fill="none"
-            stroke="#D4AF37"
-            strokeWidth="2"
-          />
-        )}
-
-        {/* Weekly data points */}
-        {chartData.dots.map((dot, i) => (
-          <Circle key={i} cx={dot.x} cy={dot.y} r="4" fill="#D4AF37" />
-        ))}
-
-        {/* Individual transaction dots */}
-        {chartData.transactionDots && chartData.transactionDots.map((dot, i) => (
-          <Circle key={`tx-${i}`} cx={dot.x} cy={dot.y} r="3" fill="#EDE7DB" opacity="0.7" />
-        ))}
+        {/* Y-axis labels */}
+        {Array.from({ length: ySteps + 1 }).map((_, i) => {
+          const value = yStepValue * (ySteps - i);
+          const y = padding.top + (i / ySteps) * plotHeight;
+          return (
+            <SvgText
+              key={`ylabel-${i}`}
+              x={padding.left - 10}
+              y={y + 4}
+              fontSize="12"
+              fill={AppColors.textTertiary}
+              textAnchor="end"
+              fontFamily="system-ui"
+              fontWeight="400"
+            >
+              £{value}
+            </SvgText>
+          );
+        })}
 
         {/* X-axis labels */}
-        {chartData.dots.map((dot, i) => (
-          <SvgText
-            key={i}
-            x={dot.x}
-            y={chartHeight - padding.bottom + 20}
-            fontSize="10"
-            fill="#B8B2A7"
-            textAnchor="middle"
-          >
-            {dot.week}
-          </SvgText>
+        {dailyData.map((day, index) => {
+          // Show every 5th day to avoid crowding
+          if (index % 5 !== 0 && index !== dailyData.length - 1) return null;
+          const x = padding.left + (index / (dailyData.length - 1 || 1)) * plotWidth;
+          return (
+            <SvgText
+              key={`xlabel-${index}`}
+              x={x}
+              y={chartHeight - padding.bottom + 20}
+              fontSize="11"
+              fill={AppColors.textTertiary}
+              textAnchor="middle"
+              fontFamily="system-ui"
+              fontWeight="400"
+            >
+              {day.day}
+            </SvgText>
+          );
+        })}
+
+        {/* Line path */}
+        <Path
+          d={pathData}
+          fill="none"
+          stroke={AppColors.accent}
+          strokeWidth="3"
+        />
+
+        {/* Data points */}
+        {points.map((point, index) => (
+          <Circle
+            key={`point-${index}`}
+            cx={point.x}
+            cy={point.y}
+            r="4"
+            fill={AppColors.accent}
+          />
         ))}
+
+        {/* Individual transaction dots (semi-transparent) */}
+        {transactions.map((tx, index) => {
+          const dayIndex = getDayIndex(tx.date, dailyData, budgetStartDate);
+          if (dayIndex === -1) return null;
+          const x = padding.left + (dayIndex / (dailyData.length - 1 || 1)) * plotWidth;
+          const y = padding.top + plotHeight - (tx.amount / (yStepValue * ySteps)) * plotHeight;
+          return (
+            <Circle
+              key={`tx-${index}`}
+              cx={x}
+              cy={y}
+              r="2"
+              fill={AppColors.accent}
+              opacity="0.3"
+            />
+          );
+        })}
       </Svg>
     </View>
   );
 }
 
+function groupByDay(transactions: Transaction[], budgetStartDate: Date): { day: number; amount: number }[] {
+  const days: { [key: number]: number } = {};
+  
+  transactions.forEach(tx => {
+    const txDate = new Date(tx.date);
+    // Calculate days since budget start (1-based)
+    const daysSinceStart = Math.floor((txDate.getTime() - budgetStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    if (daysSinceStart > 0) {
+      days[daysSinceStart] = (days[daysSinceStart] || 0) + tx.amount;
+    }
+  });
+
+  return Object.entries(days).map(([day, amount]) => ({
+    day: parseInt(day),
+    amount,
+  })).sort((a, b) => a.day - b.day);
+}
+
+function getDayIndex(date: string, dailyData: { day: number; amount: number }[], budgetStartDate: Date): number {
+  const txDate = new Date(date);
+  const daysSinceStart = Math.floor((txDate.getTime() - budgetStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  return dailyData.findIndex(data => data.day === daysSinceStart);
+}
+
+function createSmoothPath(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+  let path = `M ${points[0].x} ${points[0].y}`;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const current = points[i];
+    const next = points[i + 1];
+    
+    // Calculate control points for cubic bezier
+    const cp1x = current.x + (next.x - current.x) / 3;
+    const cp1y = current.y;
+    const cp2x = current.x + (2 * (next.x - current.x)) / 3;
+    const cp2y = next.y;
+    
+    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
+  }
+
+  return path;
+}
+
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#111417',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#1A1E24',
-    padding: 16,
-    marginBottom: 24,
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  emptyContainer: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyText: {
-    color: '#8C8577',
-    textAlign: 'center',
     fontSize: 14,
+    color: AppColors.textTertiary,
   },
 });

@@ -1,108 +1,152 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, SafeAreaView, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { login } from '@/lib/auth';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View, Text } from 'react-native';
+import { Link, useRouter } from 'expo-router';
+
+import { AppColors } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
+  const { signIn, profile } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async () => {
-    setError('');
-    if (!email.trim() || !password) {
-      setError('Please enter email and password');
+    setSubmitting(true);
+    const result = await signIn(email.trim().toLowerCase(), password);
+    setSubmitting(false);
+
+    if (result?.error) {
+      Alert.alert('Login issue', result.error);
       return;
     }
-    
-    setLoading(true);
-    try {
-      await login(email.trim(), password);
-      // Supabase session is now set automatically
-      // Root layout will detect session and redirect to /(main)/(tabs)
-    } catch (err: any) {
-      setLoading(false);
-      if (err.message?.includes('Invalid login')) {
-        setError('Invalid email or password');
-      } else if (err.message?.includes('Email not confirmed')) {
-        setError('Please verify your email address');
-      } else {
-        setError(err.message || 'Login failed. Please try again.');
-      }
+
+    if (profile?.monthly_budget) {
+      router.replace('/(tabs)');
+    } else {
+      router.replace('/(auth)/onboarding');
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView style={styles.flex} behavior="padding">
-        <View style={styles.content}>
-        <Text style={styles.appName}>Flow</Text>
-        <Text style={styles.subtitle}>Stay within your budget, calmly.</Text>
-
-        <View style={styles.form}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.select({ ios: 'padding', android: undefined })}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.subtitle}>
+          Flow keeps you aware, not alarmed. Sign in to continue.
+        </Text>
+        <View style={styles.field}>
+          <Text style={styles.label}>Email</Text>
           <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#999"
-            autoCapitalize="none"
-            keyboardType="email-address"
             value={email}
             onChangeText={setEmail}
-            editable={!loading}
-          />
-
-          <TextInput
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholder="you@example.com"
             style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#999"
-            secureTextEntry
+            placeholderTextColor="#8C8577"
+          />
+        </View>
+        <View style={styles.field}>
+          <Text style={styles.label}>Password</Text>
+          <TextInput
             value={password}
             onChangeText={setPassword}
-            editable={!loading}
+            secureTextEntry
+            placeholder="••••••••"
+            style={styles.input}
+            placeholderTextColor="#8C8577"
           />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          <TouchableOpacity 
-            style={[styles.button, loading && styles.buttonDisabled]} 
-            onPress={onSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
-          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity onPress={() => router.push('/(auth)/signup' as any)} disabled={loading}>
-          <Text style={styles.link}>Create an account</Text>
-        </TouchableOpacity>
+        <Pressable style={[styles.button, submitting && styles.buttonDisabled]} onPress={onSubmit} disabled={submitting}>
+          <Text style={styles.buttonText}>
+            {submitting ? 'Signing in…' : 'Login'}
+          </Text>
+        </Pressable>
+        <View style={styles.footerRow}>
+          <Text style={styles.footerText}>New to Flow?</Text>
+          <Link href="/(auth)/signup" asChild>
+            <Pressable>
+              <Text style={styles.linkText}>Create account</Text>
+            </Pressable>
+          </Link>
+        </View>
       </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: '#0B0D0F' },
-  content: { flex: 1, padding: 24, justifyContent: 'center' },
-  appName: { fontSize: 36, fontWeight: '700', color: '#EDE7DB', marginBottom: 12, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#B8B2A7', marginBottom: 48, textAlign: 'center' },
-  form: { marginBottom: 32 },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: AppColors.background,
+  },
+  card: {
+    borderRadius: 16,
+    padding: 24,
+    gap: 20,
+    backgroundColor: AppColors.cardDark,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: AppColors.textPrimary,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+    marginBottom: 8,
+  },
+  field: {
+    gap: 10,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
+  },
   input: {
     borderWidth: 1,
-    borderColor: '#2A2E35',
-    borderRadius: 6,
-    padding: 16,
+    borderColor: AppColors.border,
+    borderRadius: 12,
+    padding: 14,
     fontSize: 16,
-    marginBottom: 16,
-    backgroundColor: '#111417',
-    color: '#EDE7DB',
+    color: AppColors.textPrimary,
+    backgroundColor: AppColors.background,
   },
-  button: { backgroundColor: '#D4AF37', padding: 16, borderRadius: 6, alignItems: 'center', marginTop: 8 },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#0B0D0F', fontSize: 16, fontWeight: '600' },
-  error: { color: '#EDE7DB', marginBottom: 12, fontSize: 13, textAlign: 'center' },
-  link: { color: '#B8B2A7', fontSize: 14, textAlign: 'center' },
+  button: {
+    backgroundColor: AppColors.accent,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+  },
+  linkText: {
+    fontSize: 14,
+    color: AppColors.accent,
+    fontWeight: '600',
+  },
 });

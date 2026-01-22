@@ -1,249 +1,312 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, SafeAreaView, Alert, Platform, Linking } from 'react-native';
-import { useRouter } from 'expo-router';
-import { register } from '@/lib/auth';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View, Text, ScrollView } from 'react-native';
+import { Link, useRouter } from 'expo-router';
+
+import { AppColors } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
+
+type SignupStep = 1 | 2 | 3;
 
 export default function SignupScreen() {
+  const { signUp, updateProfile } = useAuth();
   const router = useRouter();
-  const [fullName, setFullName] = useState('');
+  const [step, setStep] = useState<SignupStep>(1);
+
+  // Step 1: Auth
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [dob, setDob] = useState<Date | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [agreeToPolicy, setAgreeToPolicy] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submittingStep1, setSubmittingStep1] = useState(false);
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    // Close picker on Android when date is selected or dismissed
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-    if (selectedDate && event.type === 'set') {
-      setDob(selectedDate);
-      // Close picker on iOS after selection
-      if (Platform.OS === 'ios') {
-        setShowDatePicker(false);
-      }
-    }
-  };
+  // Step 2: Personal Details
+  const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
+  const [occupation, setOccupation] = useState('');
+  const [submittingStep2, setSubmittingStep2] = useState(false);
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  // Step 3: Budget
+  const [budget, setBudget] = useState('');
+  const [submittingStep3, setSubmittingStep3] = useState(false);
 
-  const openPrivacyPolicy = () => {
-    // Replace with your actual privacy policy URL
-    Linking.openURL('https://yourapp.com/privacy-policy');
-  };
-
-  const onSubmit = async () => {
-    setError('');
-    
-    // Validation
-    if (!fullName.trim()) {
-      setError('Please enter your full name');
-      return;
-    }
+  const onStep1Continue = async () => {
     if (!email.trim() || !password || !confirmPassword) {
-      setError('Please fill in all required fields');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      setError('Please enter a valid email');
-      return;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      Alert.alert('Missing fields', 'Please fill in all fields.');
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      Alert.alert('Passwords do not match', 'Please ensure both passwords are the same.');
       return;
     }
-    if (!agreeToPolicy) {
-      setError('Please agree to privacy policy to continue');
+    if (password.length < 8) {
+      Alert.alert('Weak password', 'Password must be at least 8 characters.');
       return;
     }
-    
-    setLoading(true);
-    try {
-      await register(email.trim(), password);
-      setLoading(false);
-      // Show success message and navigate to login
-      Alert.alert(
-        'Success', 
-        'Account created! Please check your email to verify your account, then sign in.',
-        [
-          { 
-            text: 'OK',
-            onPress: () => router.replace('/(auth)/login')
-          }
-        ]
-      );
-    } catch (err: any) {
-      setLoading(false);
-      if (err.message?.includes('already registered')) {
-        setError('Email already registered. Please sign in instead.');
-      } else if (err.message?.includes('Password')) {
-        setError('Password is too weak. Use at least 6 characters.');
-      } else {
-        setError(err.message || 'Registration failed. Please try again.');
-      }
+
+    setSubmittingStep1(true);
+    const result = await signUp(email.trim().toLowerCase(), password);
+    setSubmittingStep1(false);
+
+    if (result?.error) {
+      Alert.alert('Could not create account', result.error);
+      return;
     }
+
+    setStep(2);
+  };
+
+  const onStep2Continue = async () => {
+    if (!name.trim()) {
+      Alert.alert('Missing name', 'Please enter your name.');
+      return;
+    }
+    if (!dob.trim()) {
+      Alert.alert('Missing DOB', 'Please enter your date of birth (YYYY-MM-DD).');
+      return;
+    }
+    if (!occupation.trim()) {
+      Alert.alert('Missing occupation', 'Please enter your occupation.');
+      return;
+    }
+
+    setSubmittingStep2(true);
+    const result = await updateProfile({ name: name.trim(), dob: dob.trim(), occupation: occupation.trim() });
+    setSubmittingStep2(false);
+
+    if (result?.error) {
+      Alert.alert('Could not save details', result.error);
+      return;
+    }
+
+    setStep(3);
+  };
+
+  const onStep3Continue = async () => {
+    const value = Number(budget);
+    if (!value || value <= 0) {
+      Alert.alert('Add a monthly budget', 'Enter your monthly amount to pace spending.');
+      return;
+    }
+
+    setSubmittingStep3(true);
+    const result = await updateProfile({ monthly_budget: value });
+    setSubmittingStep3(false);
+
+    if (result?.error) {
+      Alert.alert('Could not save budget', result.error);
+      return;
+    }
+
+    router.replace('/(tabs)');
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView style={styles.flex} behavior="padding">
-        <View style={styles.content}>
-        <Text style={styles.appName}>Flow</Text>
-        <Text style={styles.subtitle}>Create your account</Text>
-
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="First & Last Name"
-            placeholderTextColor="#999"
-            autoCapitalize="words"
-            value={fullName}
-            onChangeText={setFullName}
-            editable={!loading}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#999"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-            editable={!loading}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Password (min 6 characters)"
-            placeholderTextColor="#999"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            editable={!loading}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
-            placeholderTextColor="#999"
-            secureTextEntry
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            editable={!loading}
-          />
-
-          <TouchableOpacity
-            style={styles.input}
-            onPress={() => setShowDatePicker(true)}
-            disabled={loading}
-          >
-            <Text style={[styles.dateText, !dob && styles.placeholderText]}>
-              {dob ? formatDate(dob) : 'Date of Birth (Optional)'}
-            </Text>
-          </TouchableOpacity>
-
-          {showDatePicker && (
-            <DateTimePicker
-              value={dob || new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onDateChange}
-              maximumDate={new Date()}
-            />
-          )}
-
-          <View style={styles.checkboxContainer}>
-            <TouchableOpacity 
-              onPress={() => setAgreeToPolicy(!agreeToPolicy)}
-              disabled={loading}
-              style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
-            >
-              <View style={[styles.checkbox, agreeToPolicy && styles.checkboxChecked]}>
-                {agreeToPolicy && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.checkboxLabel}>I agree to privacy and policy</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={openPrivacyPolicy} disabled={loading}>
-              <Text style={styles.policyLink}>Read</Text>
-            </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.select({ ios: 'padding', android: undefined })}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {step === 1 && (
+          <View style={styles.card}>
+            <Text style={styles.title}>Create your Flow</Text>
+            <Text style={styles.subtitle}>Step 1 of 3 • Authentication</Text>
+            <View style={styles.field}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                placeholder="you@example.com"
+                style={styles.input}
+                placeholderTextColor="#8C8577"
+              />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholder="At least 8 characters"
+                style={styles.input}
+                placeholderTextColor="#8C8577"
+              />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <TextInput
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                placeholder="Confirm your password"
+                style={styles.input}
+                placeholderTextColor="#8C8577"
+              />
+            </View>
+            <Pressable
+              style={[styles.button, submittingStep1 && styles.buttonDisabled]}
+              onPress={onStep1Continue}
+              disabled={submittingStep1}>
+              <Text style={styles.buttonText}>
+                {submittingStep1 ? 'Continue…' : 'Continue'}
+              </Text>
+            </Pressable>
+            <View style={styles.footerRow}>
+              <Text style={styles.footerText}>Have an account?</Text>
+              <Link href="/(auth)/login" asChild>
+                <Pressable>
+                  <Text style={styles.linkText}>Log in</Text>
+                </Pressable>
+              </Link>
+            </View>
           </View>
+        )}
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+        {step === 2 && (
+          <View style={styles.card}>
+            <Text style={styles.title}>Tell us about you</Text>
+            <Text style={styles.subtitle}>Step 2 of 3 • Personal Details</Text>
+            <View style={styles.field}>
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="John Doe"
+                style={styles.input}
+                placeholderTextColor="#8C8577"
+              />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Date of Birth</Text>
+              <TextInput
+                value={dob}
+                onChangeText={setDob}
+                placeholder="YYYY-MM-DD"
+                style={styles.input}
+                placeholderTextColor="#8C8577"
+              />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Occupation</Text>
+              <TextInput
+                value={occupation}
+                onChangeText={setOccupation}
+                placeholder="Software Engineer"
+                style={styles.input}
+                placeholderTextColor="#8C8577"
+              />
+            </View>
+            <Pressable
+              style={[styles.button, submittingStep2 && styles.buttonDisabled]}
+              onPress={onStep2Continue}
+              disabled={submittingStep2}>
+              <Text style={styles.buttonText}>
+                {submittingStep2 ? 'Continue…' : 'Continue'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
 
-          <TouchableOpacity 
-            style={[styles.button, loading && styles.buttonDisabled]} 
-            onPress={onSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Sign Up'}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-          <Text style={styles.link}>Back to Sign In</Text>
-        </TouchableOpacity>
-      </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {step === 3 && (
+          <View style={styles.card}>
+            <Text style={styles.title}>Set your monthly flow</Text>
+            <Text style={styles.subtitle}>Step 3 of 3 • Budget Setup</Text>
+            <View style={styles.field}>
+              <Text style={styles.label}>Monthly Budget</Text>
+              <TextInput
+                value={budget}
+                onChangeText={setBudget}
+                keyboardType="decimal-pad"
+                placeholder="$2,400"
+                style={styles.input}
+                placeholderTextColor="#8C8577"
+              />
+            </View>
+            <Pressable
+              style={[styles.button, submittingStep3 && styles.buttonDisabled]}
+              onPress={onStep3Continue}
+              disabled={submittingStep3}>
+              <Text style={styles.buttonText}>
+                {submittingStep3 ? 'Setting up…' : 'Get started'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0B0D0F' },
-  flex: { flex: 1 },
-  content: { flex: 1, padding: 24, justifyContent: 'center' },
-  appName: { fontSize: 36, fontWeight: '700', color: '#EDE7DB', marginBottom: 12, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#B8B2A7', marginBottom: 48, textAlign: 'center' },
-  form: { marginBottom: 32 },
+  container: {
+    flex: 1,
+    backgroundColor: AppColors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  card: {
+    borderRadius: 16,
+    padding: 24,
+    gap: 20,
+    backgroundColor: AppColors.cardDark,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: AppColors.textPrimary,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+    marginBottom: 8,
+  },
+  field: {
+    gap: 10,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: AppColors.textPrimary,
+  },
   input: {
     borderWidth: 1,
-    borderColor: '#2A2E35',
-    borderRadius: 6,
-    padding: 16,
+    borderColor: AppColors.border,
+    borderRadius: 12,
+    padding: 14,
     fontSize: 16,
-    marginBottom: 16,
-    backgroundColor: '#111417',
-    color: '#EDE7DB',
-    justifyContent: 'center',
+    color: AppColors.textPrimary,
+    backgroundColor: AppColors.background,
   },
-  dateText: { color: '#EDE7DB', fontSize: 16 },
-  placeholderText: { color: '#999' },
-  button: { backgroundColor: '#D4AF37', padding: 16, borderRadius: 6, alignItems: 'center', marginTop: 8 },
-  buttonDisabled: { backgroundColor: '#6B5F4D', padding: 16, borderRadius: 6, alignItems: 'center', marginTop: 8 },
-  buttonText: { color: '#0B0D0F', fontSize: 16, fontWeight: '600' },
-  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 4 },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
-    borderColor: '#2A2E35',
-    borderRadius: 4,
-    marginRight: 10,
+  button: {
+    backgroundColor: AppColors.accent,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#111417',
   },
-  checkboxChecked: { backgroundColor: '#D4AF37', borderColor: '#D4AF37' },
-  checkmark: { color: '#0B0D0F', fontSize: 14, fontWeight: 'bold' },
-  checkboxLabel: { color: '#B8B2A7', fontSize: 14, flex: 1 },
-  policyLink: { color: '#D4AF37', fontSize: 14, fontWeight: '600', marginLeft: 8 },
-  error: { color: '#EDE7DB', marginBottom: 12, fontSize: 13, textAlign: 'center' },
-  link: { color: '#B8B2A7', fontSize: 14, textAlign: 'center' },
+  footerText: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+  },
+  linkText: {
+    fontSize: 14,
+    color: AppColors.accent,
+    fontWeight: '600',
+  },
 });
