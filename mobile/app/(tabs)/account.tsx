@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, SafeAreaView, StyleSheet, View, Text } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { AppColors } from '@/constants/theme';
@@ -119,10 +120,12 @@ export default function AccountScreen() {
               }}
               disabled={saving}
             >
-              {saving ? 'Saving...' : 'Update Budget'}
+              {saving ? 'Saving…' : 'Save Budget'}
             </Button>
           </CardContent>
         </Card>
+
+
 
         {/* Bank Statement Card */}
         <Card variant="default">
@@ -243,7 +246,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: AppColors.borderSubtle,
+    backgroundColor: AppColors.muted,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -251,7 +254,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 32,
     fontWeight: '700',
-    color: AppColors.accent,
+    color: AppColors.primary,
   },
   userName: {
     fontSize: 20,

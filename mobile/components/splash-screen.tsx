@@ -1,5 +1,6 @@
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
+import { AppColors } from '@/constants/theme';
 
 export function SplashScreen() {
   return (
@@ -8,7 +9,7 @@ export function SplashScreen() {
         Flow
       </ThemedText>
       <ThemedText style={styles.subtitle}>Aware, not alarmed.</ThemedText>
-      <ActivityIndicator size="large" color="#D4AF37" style={styles.spinner} />
+      <ActivityIndicator size="large" color={AppColors.primary} style={styles.spinner} />
     </View>
   );
 }
@@ -16,16 +17,16 @@ export function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F1419',
+    backgroundColor: AppColors.background,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 16,
   },
   title: {
-    color: '#D4AF37',
+    color: AppColors.primary,
   },
   subtitle: {
-    color: '#A89968',
+    color: AppColors.mutedForeground,
   },
   spinner: {
     marginTop: 24,

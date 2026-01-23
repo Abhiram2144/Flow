@@ -117,7 +117,7 @@ export default function SignupScreen() {
                 keyboardType="email-address"
                 placeholder="you@example.com"
                 style={styles.input}
-                placeholderTextColor="#8C8577"
+                placeholderTextColor={AppColors.mutedForeground}
               />
             </View>
             <View style={styles.field}>
@@ -128,7 +128,7 @@ export default function SignupScreen() {
                 secureTextEntry
                 placeholder="At least 8 characters"
                 style={styles.input}
-                placeholderTextColor="#8C8577"
+                placeholderTextColor={AppColors.mutedForeground}
               />
             </View>
             <View style={styles.field}>
@@ -139,7 +139,7 @@ export default function SignupScreen() {
                 secureTextEntry
                 placeholder="Confirm your password"
                 style={styles.input}
-                placeholderTextColor="#8C8577"
+                placeholderTextColor={AppColors.mutedForeground}
               />
             </View>
             <Pressable
@@ -172,7 +172,7 @@ export default function SignupScreen() {
                 onChangeText={setName}
                 placeholder="John Doe"
                 style={styles.input}
-                placeholderTextColor="#8C8577"
+                placeholderTextColor={AppColors.mutedForeground}
               />
             </View>
             <View style={styles.field}>
@@ -182,7 +182,7 @@ export default function SignupScreen() {
                 onChangeText={setDob}
                 placeholder="YYYY-MM-DD"
                 style={styles.input}
-                placeholderTextColor="#8C8577"
+                placeholderTextColor={AppColors.mutedForeground}
               />
             </View>
             <View style={styles.field}>
@@ -192,7 +192,7 @@ export default function SignupScreen() {
                 onChangeText={setOccupation}
                 placeholder="Software Engineer"
                 style={styles.input}
-                placeholderTextColor="#8C8577"
+                placeholderTextColor={AppColors.mutedForeground}
               />
             </View>
             <Pressable
@@ -218,7 +218,7 @@ export default function SignupScreen() {
                 keyboardType="decimal-pad"
                 placeholder="$2,400"
                 style={styles.input}
-                placeholderTextColor="#8C8577"
+                placeholderTextColor={AppColors.mutedForeground}
               />
             </View>
             <Pressable
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     gap: 20,
-    backgroundColor: AppColors.cardDark,
+    backgroundColor: AppColors.card,
   },
   title: {
     fontSize: 28,
@@ -276,11 +276,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: AppColors.textPrimary,
+    color: AppColors.accent,
     backgroundColor: AppColors.background,
   },
   button: {
-    backgroundColor: AppColors.accent,
+    backgroundColor: AppColors.primary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#000',
+    color: AppColors.primaryForeground,
     fontSize: 16,
     fontWeight: '600',
   },

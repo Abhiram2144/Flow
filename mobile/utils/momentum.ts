@@ -44,7 +44,7 @@ export function getMomentum(
       ratio: 0,
       status: 'SAFE',
       message: 'Your month is just starting.',
-      color: '#10B981', // Green
+      color: AppColors.primary,
       actualSpend: 0,
       idealSpend: 0,
     };
@@ -59,7 +59,7 @@ export function getMomentum(
       ratio: 0,
       status: 'SAFE',
       message: "You're spending slower than your ideal pace",
-      color: '#10B981', // Green
+      color: AppColors.primary,
       actualSpend: 0,
       idealSpend,
     };
@@ -74,7 +74,7 @@ export function getMomentum(
       ratio: roundCurrency(ratio),
       status: 'SAFE',
       message: "You're spending slower than your ideal pace",
-      color: '#10B981', // Green
+      color: AppColors.primary,
       actualSpend,
       idealSpend,
     };
@@ -85,7 +85,7 @@ export function getMomentum(
       ratio: roundCurrency(ratio),
       status: 'BALANCED',
       message: "You're right on track this month",
-      color: '#F59E0B', // Yellow/Amber
+      color: AppColors.accent,
       actualSpend,
       idealSpend,
     };
@@ -95,7 +95,7 @@ export function getMomentum(
     ratio: roundCurrency(ratio),
     status: 'RISK',
     message: "You're spending faster than planned",
-    color: '#EF4444', // Red
+    color: AppColors.destructive,
     actualSpend,
     idealSpend,
   };

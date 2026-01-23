@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.cardDark,
+    backgroundColor: AppColors.card,
     borderWidth: 1,
     borderColor: AppColors.border,
     borderRadius: 8,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 0,
     fontSize: 15,
-    color: AppColors.textPrimary,
+    color: AppColors.accent,
     fontWeight: '500',
   },
   inputWithPrefix: {
@@ -69,15 +69,15 @@ const styles = StyleSheet.create({
   prefix: {
     fontSize: 15,
     fontWeight: '600',
-    color: AppColors.accent,
+    color: AppColors.primary,
     marginRight: 4,
   },
   errorBorder: {
-    borderColor: AppColors.error,
+    borderColor: AppColors.destructive,
   },
   errorText: {
     fontSize: 12,
-    color: AppColors.error,
+    color: AppColors.destructive,
     marginTop: 6,
     fontWeight: '500',
   },

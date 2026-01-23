@@ -34,14 +34,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   variant_default: {
-    backgroundColor: AppColors.cardDark,
+    backgroundColor: AppColors.card,
     borderWidth: 1,
     borderColor: AppColors.border,
   },
   variant_elevated: {
-    backgroundColor: AppColors.cardDark,
+    backgroundColor: AppColors.card,
     borderWidth: 0,
-    shadowColor: AppColors.accent,
+    shadowColor: AppColors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   variant_outline: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: AppColors.borderSubtle,
+    borderColor: AppColors.muted,
   },
   header: {
     paddingVertical: 12,

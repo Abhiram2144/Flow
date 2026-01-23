@@ -47,7 +47,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             placeholder="you@example.com"
             style={styles.input}
-            placeholderTextColor="#8C8577"
+            placeholderTextColor={AppColors.mutedForeground}
           />
         </View>
         <View style={styles.field}>
@@ -58,7 +58,7 @@ export default function LoginScreen() {
             secureTextEntry
             placeholder="••••••••"
             style={styles.input}
-            placeholderTextColor="#8C8577"
+            placeholderTextColor={AppColors.mutedForeground}
           />
         </View>
         <Pressable style={[styles.button, submitting && styles.buttonDisabled]} onPress={onSubmit} disabled={submitting}>
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     gap: 20,
-    backgroundColor: AppColors.cardDark,
+    backgroundColor: AppColors.card,
   },
   title: {
     fontSize: 28,
@@ -116,11 +116,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: AppColors.textPrimary,
+    color: AppColors.accent,
     backgroundColor: AppColors.background,
   },
   button: {
-    backgroundColor: AppColors.accent,
+    backgroundColor: AppColors.primary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#000',
+    color: AppColors.primaryForeground,
     fontSize: 16,
     fontWeight: '600',
   },

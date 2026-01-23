@@ -62,10 +62,10 @@ export function SkeletonCard() {
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: AppColors.borderSubtle,
+    backgroundColor: AppColors.muted,
   },
   card: {
-    backgroundColor: AppColors.cardDark,
+    backgroundColor: AppColors.card,
     borderWidth: 1,
     borderColor: AppColors.border,
     borderRadius: 12,

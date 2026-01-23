@@ -22,12 +22,12 @@ export function Progress({
 
   const barColor =
     variant === 'success'
-      ? '#22c55e'
+      ? AppColors.primary
       : variant === 'warning'
-        ? '#fb923c'
+        ? AppColors.accent
         : variant === 'error'
-          ? AppColors.error
-          : AppColors.accent;
+          ? AppColors.destructive
+          : AppColors.primary;
 
   return (
     <View style={style}>
@@ -36,7 +36,7 @@ export function Progress({
           styles.container,
           {
             height,
-            backgroundColor: AppColors.borderSubtle,
+            backgroundColor: AppColors.muted,
           },
         ]}>
         <View
@@ -59,7 +59,7 @@ export function Progress({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: AppColors.borderSubtle,
+    backgroundColor: AppColors.muted,
     borderRadius: 4,
     overflow: 'hidden',
     width: '100%',

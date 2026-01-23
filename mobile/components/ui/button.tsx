@@ -72,42 +72,42 @@ const styles = StyleSheet.create({
 
   // Variants
   variant_primary: {
-    backgroundColor: AppColors.accent,
+    backgroundColor: AppColors.primary,
     borderWidth: 0,
   },
   variant_secondary: {
-    backgroundColor: AppColors.borderSubtle,
+    backgroundColor: AppColors.muted,
     borderWidth: 0,
   },
   variant_outline: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: AppColors.accent,
+    borderColor: AppColors.primary,
   },
   variant_ghost: {
     backgroundColor: 'transparent',
     borderWidth: 0,
   },
   variant_destructive: {
-    backgroundColor: AppColors.error,
+    backgroundColor: AppColors.destructive,
     borderWidth: 0,
   },
 
   // Text variants
   textVariant_primary: {
-    color: '#0B0D0F',
+    color: AppColors.primaryForeground,
   },
   textVariant_secondary: {
     color: AppColors.textPrimary,
   },
   textVariant_outline: {
-    color: AppColors.accent,
+    color: AppColors.primary,
   },
   textVariant_ghost: {
-    color: AppColors.accent,
+    color: AppColors.primary,
   },
   textVariant_destructive: {
-    color: '#FFFFFF',
+    color: AppColors.destructiveForeground,
   },
 
   // Sizes

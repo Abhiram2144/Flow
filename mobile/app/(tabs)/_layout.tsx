@@ -19,25 +19,47 @@ export default function TabLayout() {
           Platform.OS === 'web'
             ? undefined
             : () => (
-                <BlurView intensity={90} style={StyleSheet.absoluteFill}>
-                  <View style={styles.tabBarBackground} />
-                </BlurView>
-              ),
-        tabBarStyle: styles.tabBar,
+              <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+            ),
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          elevation: 0,
+          borderTopWidth: 0,
+          backgroundColor: Platform.OS === 'web' ? AppColors.background : 'transparent',
+          height: 85,
+          paddingTop: 10,
+        },
         tabBarLabelStyle: styles.tabBarLabel,
       }}>
       <Tabs.Screen
         name="momentum"
         options={{
           title: 'Momentum',
-          tabBarIcon: ({ color }) => <Ionicons size={24} name="pulse-outline" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={focused ? 32 : 24}
+              name="pulse-outline"
+              color={color}
+              style={focused ? { textShadowColor: AppColors.accent, textShadowRadius: 8, textShadowOffset: { width: 0, height: 0 } } : {}}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="home-outline" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={focused ? 36 : 28}
+              name="home-outline"
+              color={color}
+              style={focused ? { textShadowColor: AppColors.accent, textShadowRadius: 10, textShadowOffset: { width: 0, height: 0 } } : {}}
+            />
+          ),
           tabBarLabelStyle: styles.centerLabel,
         }}
       />
@@ -45,8 +67,13 @@ export default function TabLayout() {
         name="account"
         options={{
           title: 'Account',
-          tabBarIcon: ({ color }) => (
-            <Ionicons size={24} name="person-circle-outline" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={focused ? 32 : 24}
+              name="person-circle-outline"
+              color={color}
+              style={focused ? { textShadowColor: AppColors.accent, textShadowRadius: 12, textShadowOffset: { width: 0, height: 0 } } : {}}
+            />
           ),
         }}
       />
@@ -57,19 +84,20 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 24,
-    left: 40,
-    right: 40,
+    bottom: 16,
+    left: 24,
+    right: 24,
     elevation: 0,
     backgroundColor: 'transparent',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: AppColors.border,
+    borderColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
     height: 70,
+    zIndex: 10,
   },
   tabBarBackground: {
-    backgroundColor: 'rgba(17, 20, 23, 0.9)',
+    backgroundColor: 'rgba(17, 20, 23, 0.6)',
   },
   tabBarLabel: {
     fontSize: 11,

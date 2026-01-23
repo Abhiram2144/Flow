@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
+import { AppColors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 
 export default function OnboardingScreen() {
@@ -47,7 +47,7 @@ export default function OnboardingScreen() {
           keyboardType="decimal-pad"
           placeholder="$2,400"
           style={styles.input}
-          placeholderTextColor={Colors.light.icon}
+          placeholderTextColor={AppColors.primary}
         />
         <Pressable style={[styles.button, saving && styles.buttonDisabled]} onPress={onContinue} disabled={saving}>
           <ThemedText type="defaultSemiBold" style={styles.buttonText}>
@@ -64,27 +64,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#0F1419',
+    backgroundColor: AppColors.background,
   },
   card: {
     borderRadius: 16,
     padding: 20,
     gap: 16,
+    backgroundColor: AppColors.card,
   },
   subtitle: {
-    color: '#A89968',
+    color: AppColors.textSecondary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#2A2F3E',
+    borderColor: AppColors.border,
     borderRadius: 12,
     padding: 12,
     fontSize: 18,
-    color: '#F5E6D3',
-    backgroundColor: '#1A1F2E',
+    color: AppColors.accent,
+    backgroundColor: AppColors.background,
   },
   button: {
-    backgroundColor: '#D4AF37',
+    backgroundColor: AppColors.accent,
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#0F1419',
+    color: AppColors.primaryForeground,
     fontSize: 16,
   },
 });

@@ -1,4 +1,5 @@
-import { ActivityIndicator, ScrollView, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { useMonthlyExpenses } from '@/hooks/use-expenses';
@@ -13,12 +14,11 @@ import {
   Stat,
   Alert,
 } from '@/components/ui';
-import { 
-  getMomentum, 
-  getDaysElapsed, 
+import {
+  getMomentum,
   getDaysInMonth,
   getMonthStart,
-  type Expense 
+  type Expense
 } from '@/utils';
 
 export default function MomentumScreen() {
@@ -28,7 +28,7 @@ export default function MomentumScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={AppColors.accent} />
+          <ActivityIndicator size="large" color={AppColors.primary} />
         </View>
       </SafeAreaView>
     );
@@ -42,8 +42,15 @@ export default function MomentumScreen() {
   const now = new Date();
   const start = getMonthStart(now);
   const daysInMonth = getDaysInMonth(now);
-  const daysPassed = getDaysElapsed(now);
-  
+  // Find first expense date in this month
+  let daysPassed = 1;
+  if (expenses && expenses.length > 0) {
+    const firstExpense = expenses.reduce((min, exp) =>
+      new Date(exp.date) < new Date(min.date) ? exp : min, expenses[0]);
+    const firstDate = new Date(firstExpense.date);
+    daysPassed = Math.max(1, Math.floor((now.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  }
+
   // Use utility function for momentum calculation
   const expenseData: Expense[] = expenses?.map(exp => ({
     amount: exp.amount,
@@ -51,24 +58,24 @@ export default function MomentumScreen() {
     category: exp.category,
     merchant: exp.merchant || undefined,
   })) || [];
-  
+
   const momentum = getMomentum(budget, expenseData, now);
-  
+
   const expectedDaily = budget / daysInMonth;
   const expectedSpent = expectedDaily * daysPassed;
   const difference = totalSpent - expectedSpent;
-  
-  const statusText = difference > 0 
+
+  const statusText = difference > 0
     ? `You're £${Math.abs(difference).toFixed(0)} above pace`
     : difference < -expectedSpent * 0.1
-    ? `You're £${Math.abs(difference).toFixed(0)} below pace`
-    : "You're on pace";
+      ? `You're £${Math.abs(difference).toFixed(0)} below pace`
+      : "You're on pace";
 
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={AppColors.accent} />
+          <ActivityIndicator size="large" color={AppColors.primary} />
           <Text style={styles.loadingText}>Analyzing momentum...</Text>
         </View>
       </SafeAreaView>
@@ -184,28 +191,34 @@ export default function MomentumScreen() {
           </CardHeader>
           <CardContent style={styles.transactionContent}>
             {expenses && expenses.length > 0 ? (
-              <View>
-                {expenses.slice(0, 8).map((expense, index) => (
-                  <View
-                    key={expense.id}
-                    style={[
-                      styles.transactionRow,
-                      index !== Math.min(7, expenses.length - 1) && styles.transactionBorder,
-                    ]}
-                  >
-                    <View style={styles.transactionLeft}>
-                      <Text style={styles.transactionMerchant}>
-                        {expense.merchant || expense.category}
-                      </Text>
-                      <Text style={styles.transactionDate}>
-                        {format(new Date(expense.date), 'MMM d')}
+              <View style={styles.transactionListContainer}>
+                <ScrollView
+                  style={styles.transactionList}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {expenses.map((expense, index) => (
+                    <View
+                      key={expense.id}
+                      style={[
+                        styles.transactionRow,
+                        index !== expenses.length - 1 && styles.transactionBorder,
+                      ]}
+                    >
+                      <View style={styles.transactionLeft}>
+                        <Text style={styles.transactionMerchant}>
+                          {expense.merchant || expense.category}
+                        </Text>
+                        <Text style={styles.transactionDate}>
+                          {format(new Date(expense.date), 'MMM d')}
+                        </Text>
+                      </View>
+                      <Text style={styles.transactionAmount}>
+                        £{expense.amount.toFixed(2)}
                       </Text>
                     </View>
-                    <Text style={styles.transactionAmount}>
-                      £{expense.amount.toFixed(2)}
-                    </Text>
-                  </View>
-                ))}
+                  ))}
+                </ScrollView>
               </View>
             ) : (
               <View style={styles.emptyState}>
@@ -310,7 +323,7 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: 14,
     fontWeight: '700',
-    color: AppColors.accent,
+    color: AppColors.primary,
   },
   emptyState: {
     paddingVertical: 32,
@@ -336,5 +349,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 14,
     color: AppColors.textSecondary,
+  },
+  transactionListContainer: {
+    maxHeight: 400,
+  },
+  transactionList: {
+    maxHeight: 400,
   },
 });

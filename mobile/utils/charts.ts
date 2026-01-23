@@ -2,6 +2,7 @@ import { getDaysInMonth, getDaysElapsed, getMonthStart } from './date';
 import { getIdealSpendByToday, getTotalSpent, roundCurrency } from './spending';
 import { groupExpensesByDay } from './projections';
 import type { Expense } from './spending';
+import { AppColors } from '@/constants/theme';
 
 export interface LineChartDataPoint {
   day: number;
@@ -66,15 +67,15 @@ export function preparePieChartData(expenses: Expense[]): PieChartDataPoint[] {
     categories[category] = (categories[category] || 0) + expense.amount;
   });
 
-  // Predefined category colors
+  // Predefined category colors using AppColors
   const categoryColors: { [key: string]: string } = {
-    Food: '#10B981',
-    Transport: '#3B82F6',
-    Entertainment: '#8B5CF6',
-    Shopping: '#EC4899',
-    Bills: '#F59E0B',
-    Healthcare: '#EF4444',
-    Other: '#6B7280',
+    Food: AppColors.chart1,
+    Transport: AppColors.chart2,
+    Entertainment: AppColors.chart3,
+    Shopping: AppColors.chart4,
+    Bills: AppColors.chart5,
+    Healthcare: AppColors.destructive,
+    Other: AppColors.muted,
   };
 
   return Object.entries(categories)

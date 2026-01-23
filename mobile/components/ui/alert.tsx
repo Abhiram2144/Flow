@@ -59,23 +59,23 @@ const styles = StyleSheet.create({
 
   // Variants
   variant_default: {
-    backgroundColor: AppColors.cardDark,
-    borderLeftColor: AppColors.borderSubtle,
+    backgroundColor: AppColors.card,
+    borderLeftColor: AppColors.muted,
   },
   variant_success: {
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-    borderLeftColor: '#22c55e',
+    backgroundColor: AppColors.muted,
+    borderLeftColor: AppColors.chart5,
   },
   variant_warning: {
-    backgroundColor: 'rgba(251, 146, 60, 0.1)',
-    borderLeftColor: '#fb923c',
+    backgroundColor: AppColors.muted,
+    borderLeftColor: AppColors.chart3,
   },
   variant_error: {
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-    borderLeftColor: AppColors.error,
+    backgroundColor: AppColors.muted,
+    borderLeftColor: AppColors.destructive,
   },
   variant_info: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderLeftColor: '#3b82f6',
+    backgroundColor: AppColors.muted,
+    borderLeftColor: AppColors.chart2,
   },
 });

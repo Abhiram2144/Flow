@@ -31,34 +31,34 @@ const styles = StyleSheet.create({
 
   // Variants
   variant_default: {
-    backgroundColor: AppColors.borderSubtle,
+    backgroundColor: AppColors.muted,
   },
   variant_success: {
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    backgroundColor: AppColors.muted,
   },
   variant_warning: {
-    backgroundColor: 'rgba(251, 146, 60, 0.2)',
+    backgroundColor: AppColors.muted,
   },
   variant_error: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    backgroundColor: AppColors.muted,
   },
   variant_info: {
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    backgroundColor: AppColors.muted,
   },
 
   textVariant_default: {
     color: AppColors.textPrimary,
   },
   textVariant_success: {
-    color: '#22c55e',
+    color: AppColors.chart5,
   },
   textVariant_warning: {
-    color: '#fb923c',
+    color: AppColors.chart3,
   },
   textVariant_error: {
-    color: AppColors.error,
+    color: AppColors.destructive,
   },
   textVariant_info: {
-    color: '#3b82f6',
+    color: AppColors.chart2,
   },
 });

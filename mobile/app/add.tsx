@@ -109,7 +109,12 @@ export default function AddExpenseScreen() {
             <Text style={styles.sectionTitle}>Category</Text>
           </CardHeader>
           <CardContent>
-            <View style={styles.categoryGrid}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryScrollContent}
+              style={styles.categoryScroll}
+            >
               {categories.map((c) => (
                 <Pressable
                   key={c}
@@ -135,7 +140,7 @@ export default function AddExpenseScreen() {
                   </Text>
                 </Pressable>
               ))}
-            </View>
+            </ScrollView>
           </CardContent>
         </Card>
 
@@ -235,7 +240,7 @@ const styles = StyleSheet.create({
   currencyPrefix: {
     fontSize: 36,
     fontWeight: '700',
-    color: AppColors.accent,
+    color: AppColors.primary,
   },
   flex: {
     flex: 1,
@@ -253,27 +258,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: AppColors.textPrimary,
   },
-  categoryGrid: {
+  categoryScroll: {
+    marginHorizontal: -16, // pull out to edge of card content
+  },
+  categoryScrollContent: {
+    paddingHorizontal: 16, // add internal padding
+    paddingVertical: 4,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+    alignItems: 'center',
+    gap: 12,
   },
   categoryChip: {
-    flex: 1,
-    minWidth: '30%',
-    backgroundColor: AppColors.cardDark,
+    backgroundColor: AppColors.card,
     borderWidth: 1.5,
     borderColor: AppColors.border,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    borderRadius: 20, // more rounded
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row', // make horizontal
     gap: 6,
   },
   categoryChipActive: {
-    backgroundColor: AppColors.accent + '15',
-    borderColor: AppColors.accent,
+    backgroundColor: AppColors.primary,
+    borderColor: AppColors.primary,
   },
   categoryEmoji: {
     fontSize: 20,
@@ -285,7 +294,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   categoryTextActive: {
-    color: AppColors.accent,
+    color: AppColors.primaryForeground,
     fontWeight: '700',
   },
   submitButton: {

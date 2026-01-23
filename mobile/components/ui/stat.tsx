@@ -29,9 +29,9 @@ export function Stat({
 
   const trendColor =
     trend === 'up'
-      ? '#22c55e'
+      ? AppColors.primary
       : trend === 'down'
-        ? AppColors.error
+        ? AppColors.destructive
         : AppColors.textTertiary;
 
   return (
@@ -54,7 +54,7 @@ export function Stat({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: AppColors.cardDark,
+    backgroundColor: AppColors.card,
     borderWidth: 1,
     borderColor: AppColors.border,
     borderRadius: 10,

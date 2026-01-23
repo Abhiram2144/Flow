@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Circle, Svg } from 'react-native-svg';
 import { ThemedText } from './themed-text';
+import { AppColors } from '@/constants/theme';
 
 interface CircularProgressProps {
   percentage: number;
@@ -24,7 +25,7 @@ export function CircularProgress({ percentage, spent, budget, radius = 60 }: Cir
             cy={radius + 10}
             r={radius}
             fill="none"
-            stroke="#2A2F3E"
+            stroke={AppColors.border}
             strokeWidth="8"
           />
           {/* Progress circle */}
@@ -33,7 +34,7 @@ export function CircularProgress({ percentage, spent, budget, radius = 60 }: Cir
             cy={radius + 10}
             r={radius}
             fill="none"
-            stroke="#D4AF37"
+            stroke={AppColors.primary}
             strokeWidth="8"
             strokeDasharray={`${circumference}`}
             strokeDashoffset={strokeDashoffset}
@@ -96,11 +97,11 @@ const styles = StyleSheet.create({
   },
   percentage: {
     fontSize: 28,
-    color: '#D4AF37',
+    color: AppColors.primary,
   },
   label: {
     fontSize: 12,
-    color: '#A89968',
+    color: AppColors.mutedForeground,
   },
   details: {
     flexDirection: 'row',
@@ -113,16 +114,16 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: '#A89968',
+    color: AppColors.mutedForeground,
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 14,
-    color: '#F5E6D3',
+    color: AppColors.textPrimary,
   },
   divider: {
     width: 1,
     height: 30,
-    backgroundColor: '#2A2F3E',
+    backgroundColor: AppColors.border,
   },
 });

@@ -1,9 +1,11 @@
-import { ActivityIndicator, Pressable, ScrollView, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { Link, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Rect, Path, G, Ellipse } from 'react-native-svg';
+import { Animated, Easing } from 'react-native';
 
 import { AppColors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -18,12 +20,12 @@ import {
   Alert,
   Progress,
 } from '@/components/ui';
-import { 
-  getMomentum, 
-  getRemainingBudget, 
+import {
+  getMomentum,
+  getRemainingBudget,
   getAverageDailySpend,
   getProjectedMonthEndSpend,
-  type Expense 
+  type Expense
 } from '@/utils';
 
 
@@ -43,7 +45,7 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={AppColors.accent} />
+          <ActivityIndicator size="large" color={AppColors.primary} />
         </View>
       </SafeAreaView>
     );
@@ -51,7 +53,7 @@ export default function DashboardScreen() {
 
   const budget = profile?.monthly_budget ?? 0;
   const spent = totals.total;
-  
+
   // Use utility functions for calculations
   const expenseData: Expense[] = expenses?.map(exp => ({
     amount: exp.amount,
@@ -59,11 +61,20 @@ export default function DashboardScreen() {
     category: exp.category,
     merchant: exp.merchant || undefined,
   })) || [];
-  
+
   const momentum = getMomentum(budget, expenseData);
   const remaining = getRemainingBudget(budget, spent);
   const projection = getProjectedMonthEndSpend(expenseData, budget);
-  const averageDaily = getAverageDailySpend(expenseData, new Date().getDate());
+  // Find first expense date in this month
+  let daysPassed = 1;
+  if (expenseData.length > 0) {
+    const firstExpense = expenseData.reduce((min, exp) =>
+      new Date(exp.date) < new Date(min.date) ? exp : min, expenseData[0]);
+    const firstDate = new Date(firstExpense.date);
+    const now = new Date();
+    daysPassed = Math.max(1, Math.floor((now.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  }
+  const averageDaily = getAverageDailySpend(expenseData, daysPassed);
   const percentage = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
 
   const statusLabel =
@@ -94,7 +105,7 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={AppColors.accent} />
+          <ActivityIndicator size="large" color={AppColors.primary} />
           <Text style={styles.loadingText}>Loading your budget...</Text>
         </View>
       </SafeAreaView>
@@ -140,7 +151,7 @@ export default function DashboardScreen() {
                 <Text style={styles.budgetSubtext}>out of £{budget.toFixed(0)}</Text>
               </View>
               <View style={styles.progressSection}>
-                <CircularProgressIndicator percentage={percentage} size={100} />
+                <FishTankProgressIndicator percentage={percentage} size={100} />
               </View>
             </View>
             <Progress
@@ -234,35 +245,73 @@ export default function DashboardScreen() {
   );
 }
 
-function CircularProgressIndicator({ percentage, size = 60 }: { percentage: number; size?: number }) {
-  const strokeWidth = 6;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const fillHeight = (size * percentage) / 100;
+
+function FishTankProgressIndicator({ percentage, size = 100 }: { percentage: number; size?: number }) {
+  // Animated water level
+  const AnimatedRect = Animated.createAnimatedComponent(Rect);
+  const waterLevel = new Animated.Value(0);
+  Animated.timing(waterLevel, {
+    toValue: percentage,
+    duration: 900,
+    easing: Easing.out(Easing.cubic),
+    useNativeDriver: false,
+  }).start();
+
+  // Tank dimensions
+  const tankWidth = size;
+  const tankHeight = size * 1.1;
+  const tankRadius = 18;
+  const waterMax = tankHeight - 16;
+  const waterMin = 16;
+  const waterY = waterMax - ((waterMax - waterMin) * percentage) / 100;
+
+  // Fish position (moves horizontally with percentage)
+  const fishX = 20 + ((tankWidth - 40) * percentage) / 100;
+  const fishY = waterY + 18;
+
+  // Simple wave path for water surface
+  const waveWidth = tankWidth - 16;
+  const waveHeight = 8;
+  const waveY = waterY;
+  const wavePath = `M8,${waveY} Q${tankWidth / 4},${waveY + waveHeight} ${tankWidth / 2},${waveY} Q${tankWidth * 3 / 4},${waveY - waveHeight} ${tankWidth - 8},${waveY}`;
 
   return (
-    <Svg width={size} height={size}>
-      <Circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        stroke="#D4D4D4"
-        strokeWidth={strokeWidth}
+    <Svg width={tankWidth} height={tankHeight}>
+      {/* Tank outline */}
+      <Rect
+        x={4}
+        y={8}
+        width={tankWidth - 8}
+        height={tankHeight - 16}
+        rx={tankRadius}
+        fill={AppColors.card}
+        stroke={AppColors.primary}
+        strokeWidth={3}
+      />
+      {/* Water fill */}
+      <Rect
+        x={8}
+        y={waterY}
+        width={tankWidth - 16}
+        height={tankHeight - 16 - waterY}
+        rx={tankRadius - 6}
+        fill={AppColors.primary}
+        fillOpacity={0.2}
+      />
+      {/* Water surface wave */}
+      <Path
+        d={wavePath}
+        stroke={AppColors.primary}
+        strokeWidth={2}
         fill="none"
       />
-      <Circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        stroke={AppColors.accent}
-        strokeWidth={strokeWidth}
-        fill="none"
-        strokeDasharray={`${circumference} ${circumference}`}
-        strokeDashoffset={circumference - (circumference * percentage) / 100}
-        rotation={-90}
-        originX={size / 2}
-        originY={size / 2}
-      />
+      {/* Fish (simple ellipse + tail) */}
+      <G x={fishX} y={fishY}>
+        <Ellipse cx={0} cy={0} rx={12} ry={7} fill={AppColors.secondary} />
+        <Path d="M-12,0 Q-18,-4 -16,0 Q-18,4 -12,0" fill={AppColors.secondary} />
+        <Ellipse cx={5} cy={-2} rx={2} ry={2} fill={AppColors.card} />
+        <Ellipse cx={6} cy={-2} rx={0.7} ry={0.7} fill={AppColors.primaryForeground} />
+      </G>
     </Svg>
   );
 }
@@ -312,7 +361,7 @@ const styles = StyleSheet.create({
   remainingAmount: {
     fontSize: 36,
     fontWeight: '700',
-    color: AppColors.accent,
+    color: AppColors.primary,
     marginBottom: 4,
   },
   budgetSubtext: {
@@ -377,25 +426,26 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    bottom: 80,
-    left: 16,
-    right: 16,
-    backgroundColor: AppColors.accent,
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    bottom: 100, // move above tab bar
+    left: 32,
+    right: 32,
+    backgroundColor: AppColors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 8,
-    shadowColor: AppColors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    elevation: 12,
+    shadowColor: AppColors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    zIndex: 100,
   },
   addButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0B0D0F',
+    color: AppColors.primaryForeground,
   },
   loadingContainer: {
     flex: 1,
