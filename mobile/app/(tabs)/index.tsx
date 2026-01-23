@@ -266,9 +266,17 @@ function FishTankProgressIndicator({ percentage, size = 100 }: { percentage: num
   const waterMin = 16;
   const waterY = waterMax - ((waterMax - waterMin) * percentage) / 100;
 
-  // Fish position (moves horizontally with percentage)
-  const fishX = 20 + ((tankWidth - 40) * percentage) / 100;
-  const fishY = waterY + 18;
+  // Fish position (moves horizontally with percentage, clamped so fish stays inside tank)
+  const minFishX = 20;
+  const maxFishX = tankWidth - 20;
+  const fishWidth = 12; // half width of fish ellipse
+  const fishXRaw = minFishX + ((maxFishX - minFishX) * percentage) / 100;
+  const fishX = Math.max(minFishX + fishWidth, Math.min(maxFishX - fishWidth, fishXRaw)); // Clamp so fish never leaves tank
+  // Clamp fishY so it never goes below the bottom of the tank
+  const minFishY = 18;
+  const maxFishY = tankHeight - 16 - fishWidth;
+  const fishYRaw = waterY + 18;
+  const fishY = Math.min(maxFishY, Math.max(minFishY, fishYRaw)); // Clamp so fish always stays above the bottom of the tank
 
   // Simple wave path for water surface
   const waveWidth = tankWidth - 16;
