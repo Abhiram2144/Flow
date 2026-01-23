@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { AppColors } from '@/constants/theme';
@@ -18,8 +18,9 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import type { Expense } from '@/types/database';
 
-export default function AccountScreen() {
+const AccountScreen = () => {
   const { profile, upsertBudget, signOut, user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [budget, setBudget] = useState(String(profile?.monthly_budget ?? ''));
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -84,7 +85,7 @@ export default function AccountScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.profileSection}>
@@ -221,9 +222,11 @@ export default function AccountScreen() {
           </CardContent>
         </Card>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
-}
+};
+
+export default AccountScreen;
 
 const styles = StyleSheet.create({
   container: {

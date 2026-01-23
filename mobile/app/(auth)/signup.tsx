@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View, Text, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 
 import { AppColors } from '@/constants/theme';
@@ -11,6 +12,7 @@ export default function SignupScreen() {
   const { signUp, updateProfile } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState<SignupStep>(1);
+    const insets = useSafeAreaInsets();
 
   // Step 1: Auth
   const [email, setEmail] = useState('');
@@ -104,133 +106,135 @@ export default function SignupScreen() {
       style={styles.container}
       behavior={Platform.select({ ios: 'padding', android: undefined })}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {step === 1 && (
-          <View style={styles.card}>
-            <Text style={styles.title}>Create your Flow</Text>
-            <Text style={styles.subtitle}>Step 1 of 3 • Authentication</Text>
-            <View style={styles.field}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                placeholder="you@example.com"
-                style={styles.input}
-                placeholderTextColor={AppColors.mutedForeground}
-              />
+        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
+          {step === 1 && (
+            <View style={styles.card}>
+              <Text style={styles.title}>Create your Flow</Text>
+              <Text style={styles.subtitle}>Step 1 of 3 • Authentication</Text>
+              <View style={styles.field}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  placeholder="you@example.com"
+                  style={styles.input}
+                  placeholderTextColor={AppColors.mutedForeground}
+                />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  placeholder="At least 8 characters"
+                  style={styles.input}
+                  placeholderTextColor={AppColors.mutedForeground}
+                />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Confirm Password</Text>
+                <TextInput
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                  placeholder="Confirm your password"
+                  style={styles.input}
+                  placeholderTextColor={AppColors.mutedForeground}
+                />
+              </View>
+              <Pressable
+                style={[styles.button, submittingStep1 && styles.buttonDisabled]}
+                onPress={onStep1Continue}
+                disabled={submittingStep1}>
+                <Text style={styles.buttonText}>
+                  {submittingStep1 ? 'Continue…' : 'Continue'}
+                </Text>
+              </Pressable>
+              <View style={styles.footerRow}>
+                <Text style={styles.footerText}>Have an account?</Text>
+                <Link href="/(auth)/login" asChild>
+                  <Pressable>
+                    <Text style={styles.linkText}>Log in</Text>
+                  </Pressable>
+                </Link>
+              </View>
             </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholder="At least 8 characters"
-                style={styles.input}
-                placeholderTextColor={AppColors.mutedForeground}
-              />
-            </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <TextInput
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                placeholder="Confirm your password"
-                style={styles.input}
-                placeholderTextColor={AppColors.mutedForeground}
-              />
-            </View>
-            <Pressable
-              style={[styles.button, submittingStep1 && styles.buttonDisabled]}
-              onPress={onStep1Continue}
-              disabled={submittingStep1}>
-              <Text style={styles.buttonText}>
-                {submittingStep1 ? 'Continue…' : 'Continue'}
-              </Text>
-            </Pressable>
-            <View style={styles.footerRow}>
-              <Text style={styles.footerText}>Have an account?</Text>
-              <Link href="/(auth)/login" asChild>
-                <Pressable>
-                  <Text style={styles.linkText}>Log in</Text>
-                </Pressable>
-              </Link>
-            </View>
-          </View>
-        )}
+          )}
 
-        {step === 2 && (
-          <View style={styles.card}>
-            <Text style={styles.title}>Tell us about you</Text>
-            <Text style={styles.subtitle}>Step 2 of 3 • Personal Details</Text>
-            <View style={styles.field}>
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="John Doe"
-                style={styles.input}
-                placeholderTextColor={AppColors.mutedForeground}
-              />
+          {step === 2 && (
+            <View style={styles.card}>
+              <Text style={styles.title}>Tell us about you</Text>
+              <Text style={styles.subtitle}>Step 2 of 3 • Personal Details</Text>
+              <View style={styles.field}>
+                <Text style={styles.label}>Full Name</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="John Doe"
+                  style={styles.input}
+                  placeholderTextColor={AppColors.mutedForeground}
+                />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Date of Birth</Text>
+                <TextInput
+                  value={dob}
+                  onChangeText={setDob}
+                  placeholder="YYYY-MM-DD"
+                  style={styles.input}
+                  placeholderTextColor={AppColors.mutedForeground}
+                />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Occupation</Text>
+                <TextInput
+                  value={occupation}
+                  onChangeText={setOccupation}
+                  placeholder="Software Engineer"
+                  style={styles.input}
+                  placeholderTextColor={AppColors.mutedForeground}
+                />
+              </View>
+              <Pressable
+                style={[styles.button, submittingStep2 && styles.buttonDisabled]}
+                onPress={onStep2Continue}
+                disabled={submittingStep2}>
+                <Text style={styles.buttonText}>
+                  {submittingStep2 ? 'Continue…' : 'Continue'}
+                </Text>
+              </Pressable>
             </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Date of Birth</Text>
-              <TextInput
-                value={dob}
-                onChangeText={setDob}
-                placeholder="YYYY-MM-DD"
-                style={styles.input}
-                placeholderTextColor={AppColors.mutedForeground}
-              />
-            </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Occupation</Text>
-              <TextInput
-                value={occupation}
-                onChangeText={setOccupation}
-                placeholder="Software Engineer"
-                style={styles.input}
-                placeholderTextColor={AppColors.mutedForeground}
-              />
-            </View>
-            <Pressable
-              style={[styles.button, submittingStep2 && styles.buttonDisabled]}
-              onPress={onStep2Continue}
-              disabled={submittingStep2}>
-              <Text style={styles.buttonText}>
-                {submittingStep2 ? 'Continue…' : 'Continue'}
-              </Text>
-            </Pressable>
-          </View>
-        )}
+          )}
 
-        {step === 3 && (
-          <View style={styles.card}>
-            <Text style={styles.title}>Set your monthly flow</Text>
-            <Text style={styles.subtitle}>Step 3 of 3 • Budget Setup</Text>
-            <View style={styles.field}>
-              <Text style={styles.label}>Monthly Budget</Text>
-              <TextInput
-                value={budget}
-                onChangeText={setBudget}
-                keyboardType="decimal-pad"
-                placeholder="$2,400"
-                style={styles.input}
-                placeholderTextColor={AppColors.mutedForeground}
-              />
+          {step === 3 && (
+            <View style={styles.card}>
+              <Text style={styles.title}>Set your monthly flow</Text>
+              <Text style={styles.subtitle}>Step 3 of 3 • Budget Setup</Text>
+              <View style={styles.field}>
+                <Text style={styles.label}>Monthly Budget</Text>
+                <TextInput
+                  value={budget}
+                  onChangeText={setBudget}
+                  keyboardType="decimal-pad"
+                  placeholder="$2,400"
+                  style={styles.input}
+                  placeholderTextColor={AppColors.mutedForeground}
+                />
+              </View>
+              <Pressable
+                style={[styles.button, submittingStep3 && styles.buttonDisabled]}
+                onPress={onStep3Continue}
+                disabled={submittingStep3}>
+                <Text style={styles.buttonText}>
+                  {submittingStep3 ? 'Setting up…' : 'Get started'}
+                </Text>
+              </Pressable>
             </View>
-            <Pressable
-              style={[styles.button, submittingStep3 && styles.buttonDisabled]}
-              onPress={onStep3Continue}
-              disabled={submittingStep3}>
-              <Text style={styles.buttonText}>
-                {submittingStep3 ? 'Setting up…' : 'Get started'}
-              </Text>
-            </Pressable>
-          </View>
-        )}
+          )}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

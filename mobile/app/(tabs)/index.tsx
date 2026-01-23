@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { Link, useRouter } from 'expo-router';
@@ -32,6 +32,7 @@ import {
 export default function DashboardScreen() {
   const { user, profile, session } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   // Always call hooks at the top level
   const { data: expenses, totals, isLoading, error } = useMonthlyExpenses(user?.id ?? null);
 
@@ -43,11 +44,11 @@ export default function DashboardScreen() {
 
   if (!session) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <View style={styles.fullScreenLoader}>
           <ActivityIndicator size="large" color={AppColors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -103,18 +104,18 @@ export default function DashboardScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <View style={styles.fullScreenLoader}>
           <ActivityIndicator size="large" color={AppColors.primary} />
           <Text style={styles.loadingText}>Loading your budget...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <ScrollView contentContainerStyle={styles.content}>
           <Alert
             variant="error"
@@ -122,12 +123,12 @@ export default function DashboardScreen() {
             message={error.message || 'Please try again'}
           />
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -241,7 +242,7 @@ export default function DashboardScreen() {
           <Text style={styles.addButtonText}>+ Add Expense</Text>
         </Pressable>
       </Link>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 
 import { AppColors } from '@/constants/theme';
@@ -11,6 +12,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+    const insets = useSafeAreaInsets();
 
   const onSubmit = async () => {
     setSubmitting(true);
@@ -33,46 +35,48 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.select({ ios: 'padding', android: undefined })}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>
-          Flow keeps you aware, not alarmed. Sign in to continue.
-        </Text>
-        <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholder="you@example.com"
-            style={styles.input}
-            placeholderTextColor={AppColors.mutedForeground}
-          />
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholder="••••••••"
-            style={styles.input}
-            placeholderTextColor={AppColors.mutedForeground}
-          />
-        </View>
-        <Pressable style={[styles.button, submitting && styles.buttonDisabled]} onPress={onSubmit} disabled={submitting}>
-          <Text style={styles.buttonText}>
-            {submitting ? 'Signing in…' : 'Login'}
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
+        <View style={styles.card}>
+          <Text style={styles.title}>Welcome back</Text>
+          <Text style={styles.subtitle}>
+            Flow keeps you aware, not alarmed. Sign in to continue.
           </Text>
-        </Pressable>
-        <View style={styles.footerRow}>
-          <Text style={styles.footerText}>New to Flow?</Text>
-          <Link href="/(auth)/signup" asChild>
-            <Pressable>
-              <Text style={styles.linkText}>Create account</Text>
-            </Pressable>
-          </Link>
+          <View style={styles.field}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholder="you@example.com"
+              style={styles.input}
+              placeholderTextColor={AppColors.mutedForeground}
+            />
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="••••••••"
+              style={styles.input}
+              placeholderTextColor={AppColors.mutedForeground}
+            />
+          </View>
+          <Pressable style={[styles.button, submitting && styles.buttonDisabled]} onPress={onSubmit} disabled={submitting}>
+            <Text style={styles.buttonText}>
+              {submitting ? 'Signing in…' : 'Login'}
+            </Text>
+          </Pressable>
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>New to Flow?</Text>
+            <Link href="/(auth)/signup" asChild>
+              <Pressable>
+                <Text style={styles.linkText}>Create account</Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
       </View>
     </KeyboardAvoidingView>

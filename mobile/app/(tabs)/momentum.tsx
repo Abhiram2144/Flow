@@ -1,5 +1,5 @@
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { useMonthlyExpenses } from '@/hooks/use-expenses';
@@ -22,15 +22,16 @@ import {
 } from '@/utils';
 
 export default function MomentumScreen() {
+    const insets = useSafeAreaInsets();
   const { profile, user, session } = useAuth();
 
   if (!session) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <View style={styles.fullScreenLoader}>
           <ActivityIndicator size="large" color={AppColors.primary} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -73,18 +74,18 @@ export default function MomentumScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <View style={styles.fullScreenLoader}>
           <ActivityIndicator size="large" color={AppColors.primary} />
           <Text style={styles.loadingText}>Analyzing momentum...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <ScrollView contentContainerStyle={styles.content}>
           <Alert
             variant="error"
@@ -92,7 +93,7 @@ export default function MomentumScreen() {
             message={error.message || 'Please try again'}
           />
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -103,7 +104,7 @@ export default function MomentumScreen() {
   })) || [];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -223,12 +224,12 @@ export default function MomentumScreen() {
             ) : (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>No transactions yet</Text>
-              </View>
+    </View>
             )}
           </CardContent>
         </Card>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

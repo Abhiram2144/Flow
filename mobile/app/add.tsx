@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -27,6 +28,7 @@ const categoryEmojis: Record<string, string> = {
 };
 
 export default function AddExpenseScreen() {
+    const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const router = useRouter();
   const addExpense = useAddExpense(user?.id ?? null);
@@ -70,10 +72,11 @@ export default function AddExpenseScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.select({ ios: 'padding', android: undefined })}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.select({ ios: 'padding', android: undefined })}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Add Expense</Text>
@@ -197,8 +200,9 @@ export default function AddExpenseScreen() {
         >
           {addExpense.isPending ? '💾 Saving...' : '✅ Save Expense'}
         </Button>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
