@@ -63,3 +63,6 @@ export {
   type MomentumChartDataPoint,
   type MomentumChartData,
 } from './charts';
+
+// ML-lite finance predictor
+export * from './finance';

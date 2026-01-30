@@ -112,12 +112,7 @@ export default function AddExpenseScreen() {
             <Text style={styles.sectionTitle}>Category</Text>
           </CardHeader>
           <CardContent>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoryScrollContent}
-              style={styles.categoryScroll}
-            >
+            <View style={styles.categoryGrid}>
               {categories.map((c) => (
                 <Pressable
                   key={c}
@@ -130,9 +125,7 @@ export default function AddExpenseScreen() {
                     category === c && styles.categoryChipActive,
                   ]}
                 >
-                  <Text style={styles.categoryEmoji}>
-                    {categoryEmojis[c]}
-                  </Text>
+                  <Text style={styles.categoryEmoji}>{categoryEmojis[c]}</Text>
                   <Text
                     style={[
                       styles.categoryText,
@@ -143,7 +136,7 @@ export default function AddExpenseScreen() {
                   </Text>
                 </Pressable>
               ))}
-            </ScrollView>
+            </View>
           </CardContent>
         </Card>
 
@@ -216,7 +209,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 8, // reduce top margin for less padding
   },
   title: {
     fontSize: 28,
@@ -262,8 +255,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: AppColors.textPrimary,
   },
-  categoryScroll: {
-    marginHorizontal: -16, // pull out to edge of card content
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'flex-start',
+    marginTop: 4,
+    marginBottom: 4,
   },
   categoryScrollContent: {
     paddingHorizontal: 16, // add internal padding

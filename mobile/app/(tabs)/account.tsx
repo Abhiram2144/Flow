@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import { Buffer } from 'buffer';
+import { File } from 'expo-file-system';
 import { AppColors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -14,17 +17,18 @@ import {
   Input,
   Alert as AlertComponent,
 } from '@/components/ui';
-import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import type { Expense } from '@/types/database';
 
+
 const AccountScreen = () => {
-  const { profile, upsertBudget, signOut, user } = useAuth();
+  const { profile, upsertBudget, signOut, user, session } = useAuth();
   const insets = useSafeAreaInsets();
   const [budget, setBudget] = useState(String(profile?.monthly_budget ?? ''));
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     setBudget(profile?.monthly_budget ? String(profile.monthly_budget) : '');
@@ -61,29 +65,115 @@ const AccountScreen = () => {
     const header = 'date,category,merchant,amount\n';
     const rows = (data ?? []).map((e: Expense) => `${e.date},${e.category},${e.merchant ?? ''},${e.amount}`);
     const csv = header + rows.join('\n');
-    const uri = `${FileSystem.cacheDirectory}flow-export.csv`;
+    // @ts-ignore: cacheDirectory is available at runtime
+    const uri = `${(FileSystem as any).cacheDirectory}flow-export.csv`;
     await FileSystem.writeAsStringAsync(uri, csv, { encoding: 'utf8' });
     await Sharing.shareAsync(uri, { mimeType: 'text/csv', dialogTitle: 'Flow export' });
   };
 
   const onDeleteAccount = async () => {
-    if (!user) return;
-    Alert.alert('Delete account', 'This removes your data in Flow. Continue?', [
+  if (!user) return;
+
+  Alert.alert(
+    'Delete account',
+    'This will permanently delete your account and all data. This cannot be undone.',
+    [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          setDeleting(true);
-          await supabase.from('expenses').delete().eq('user_id', user.id);
-          await supabase.from('users').delete().eq('id', user.id);
-          setDeleting(false);
-          await signOut();
+          try {
+            setDeleting(true);
+
+            // Get session token
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !sessionData.session) {
+              throw new Error('Not authenticated');
+            }
+
+            const accessToken = sessionData.session.access_token;
+
+            // Call Edge Function (secure deletion)
+            const response = await fetch(
+              'https://qbvjzqdcyqzugtqreqau.supabase.co/functions/v1/auth-remover',
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || result.error) {
+              throw new Error(result.error || 'Account deletion failed');
+            }
+
+            // Sign out locally after deletion
+            await signOut();
+
+            Alert.alert('Account deleted', 'Your account has been permanently removed.');
+
+          } catch (err: any) {
+            Alert.alert('Error', err.message || 'Failed to delete account.');
+          } finally {
+            setDeleting(false);
+          }
         },
       },
-    ]);
+    ]
+  );
+};
+
+
+  // --- Bank Statement Upload Logic (PDF) ---
+  const onUploadStatement = async () => {
+    if (!user) return;
+    setUploading(true);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
+      if (result.canceled || !result.assets?.[0]?.uri) {
+        setUploading(false);
+        return;
+      }
+      const fileUri = result.assets[0].uri;
+      // Read as binary and upload to backend
+      // Read file as base64 and convert to Uint8Array for Blob
+      const base64 = await FileSystem.readAsStringAsync(fileUri, { encoding: 'base64' });
+      const byteArray = Uint8Array.from(Buffer.from(base64, 'base64'));
+      const formData = new FormData();
+      formData.append('file', new Blob([byteArray], { type: 'application/pdf' }), 'statement.pdf');
+      const response = await fetch('http://localhost:8000/parse-statement', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Failed to parse PDF');
+      const transactions = await response.json();
+      if (!Array.isArray(transactions) || transactions.length === 0) throw new Error('No valid expenses found in file.');
+      const payload = transactions.map((t: any) => ({
+        user_id: user.id,
+        amount: t.amount,
+        category: t.category || 'Imported',
+        merchant: t.merchant || null,
+        date: t.date,
+      }));
+      for (let i = 0; i < payload.length; i += 500) {
+        const batch = payload.slice(i, i + 500);
+        const { error } = await supabase.from('expenses').insert(batch);
+        if (error) throw error;
+      }
+      Alert.alert('Success', 'Bank statement imported successfully.');
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to import bank statement.');
+    } finally {
+      setUploading(false);
+    }
   };
 
+  // --- UI ---
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -121,12 +211,10 @@ const AccountScreen = () => {
               }}
               disabled={saving}
             >
-              {saving ? 'Saving…' : 'Save Budget'}
+              {saving ? 'Saving…' : 'Change Budget'}
             </Button>
           </CardContent>
         </Card>
-
-
 
         {/* Bank Statement Card */}
         <Card variant="default">
@@ -134,17 +222,18 @@ const AccountScreen = () => {
             <Text style={styles.sectionTitle}>🏦 Bank Statement</Text>
           </CardHeader>
           <CardContent style={styles.cardGap}>
-            <Text style={styles.comingSoonText}>Feature coming soon</Text>
             <Button
-              variant="outline"
+              variant="primary"
               size="md"
-              disabled
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onUploadStatement();
               }}
+              disabled={uploading}
             >
-              Upload Statement
+              {uploading ? 'Uploading…' : 'Upload Statement'}
             </Button>
+            <Text style={styles.comingSoonText}>Upload a PDF bank statement</Text>
           </CardContent>
         </Card>
 
@@ -197,36 +286,10 @@ const AccountScreen = () => {
             </Button>
           </CardContent>
         </Card>
-
-        {/* Danger Zone Card */}
-        <Card variant="outline">
-          <CardHeader>
-            <Text style={[styles.sectionTitle, styles.dangerText]}>⚠️ Danger Zone</Text>
-          </CardHeader>
-          <CardContent style={styles.cardGap}>
-            <AlertComponent
-              variant="error"
-              message="Deleting your account will permanently remove all your data from Flow."
-            />
-            <Button
-              variant="destructive"
-              size="md"
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                onDeleteAccount();
-              }}
-              disabled={deleting}
-            >
-              {deleting ? 'Deleting...' : 'Delete Account'}
-            </Button>
-          </CardContent>
-        </Card>
       </ScrollView>
     </View>
   );
 };
-
-export default AccountScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -257,32 +320,33 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 32,
     fontWeight: '700',
-    color: AppColors.primary,
+    color: AppColors.primaryForeground,
   },
   userName: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     color: AppColors.textPrimary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   userEmail: {
     fontSize: 13,
     color: AppColors.textSecondary,
-  },
-  cardGap: {
-    gap: 12,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: AppColors.textPrimary,
   },
-  dangerText: {
-    color: AppColors.textPrimary,
+  cardGap: {
+    gap: 12,
   },
   comingSoonText: {
-    fontSize: 13,
+    fontSize: 12,
     color: AppColors.textSecondary,
+    marginTop: 8,
     fontStyle: 'italic',
   },
 });
+
+export default AccountScreen;

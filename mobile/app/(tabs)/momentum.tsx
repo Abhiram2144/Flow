@@ -21,19 +21,10 @@ import {
   type Expense
 } from '@/utils';
 
-export default function MomentumScreen() {
-    const insets = useSafeAreaInsets();
-  const { profile, user, session } = useAuth();
 
-  if (!session) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
-        <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={AppColors.primary} />
-        </View>
-      </View>
-    );
-  }
+export default function MomentumScreen() {
+  const insets = useSafeAreaInsets();
+  const { profile, user, session } = useAuth();
 
   const { data: expenses, totals, isLoading, error } = useMonthlyExpenses(user?.id ?? null);
 

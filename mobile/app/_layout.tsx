@@ -21,16 +21,20 @@ function AuthGate() {
   useEffect(() => {
     if (!authReady) return;
     const inAuthGroup = segments[0] === '(auth)';
+    const isOnboarding = segments[1] === 'onboarding';
 
     if (!session) {
-      // User is logged out - always go to login
       if (!inAuthGroup) {
         router.replace('/(auth)/login');
       }
       return;
     }
 
-    // User is logged in with budget - go to tabs
+    if (session && !profile?.monthly_budget && inAuthGroup && !isOnboarding) {
+      router.replace('/(auth)/onboarding');
+      return;
+    }
+
     if (session && profile?.monthly_budget && inAuthGroup) {
       router.replace('/(tabs)');
     }

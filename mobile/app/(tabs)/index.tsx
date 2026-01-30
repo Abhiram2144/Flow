@@ -25,6 +25,7 @@ import {
   getRemainingBudget,
   getAverageDailySpend,
   getProjectedMonthEndSpend,
+  runSpendingPrediction,
   type Expense
 } from '@/utils';
 
@@ -36,21 +37,7 @@ export default function DashboardScreen() {
   // Always call hooks at the top level
   const { data: expenses, totals, isLoading, error } = useMonthlyExpenses(user?.id ?? null);
 
-  useEffect(() => {
-    if (profile && !profile.monthly_budget) {
-      router.replace('/(auth)/onboarding');
-    }
-  }, [profile, router]);
-
-  if (!session) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
-        <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={AppColors.primary} />
-        </View>
-      </View>
-    );
-  }
+  // Auth gating is handled globally in RootLayout's AuthGate
 
   const budget = profile?.monthly_budget ?? 0;
   const spent = totals.total;
@@ -62,6 +49,14 @@ export default function DashboardScreen() {
     category: exp.category,
     merchant: exp.merchant || undefined,
   })) || [];
+
+  // ML-lite prediction
+  const prediction = runSpendingPrediction(
+    expenseData,
+    budget,
+    new Date(),
+    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
+  );
 
   const momentum = getMomentum(budget, expenseData);
   const remaining = getRemainingBudget(budget, spent);
@@ -203,9 +198,15 @@ export default function DashboardScreen() {
           </CardHeader>
           <CardContent>
             <Text style={styles.insightText}>{momentum.message}</Text>
-            <Text style={styles.projectionText}>
-              {projection.message}
-            </Text>
+            <Text style={styles.projectionText}>{projection.message}</Text>
+            {/* ML-lite predictions */}
+            <Text style={styles.insightText}>Next 7 days: £{prediction.next7Days}</Text>
+            <Text style={styles.insightText}>Month End: £{prediction.monthEnd}</Text>
+            <Text style={styles.insightText}>Budget Status: {prediction.status}</Text>
+            <Text style={styles.insightText}>Confidence: {Math.round(prediction.confidence * 100)}%</Text>
+            {prediction.explanation.map((ex, i) => (
+              <Text key={i} style={styles.projectionText}>• {ex}</Text>
+            ))}
           </CardContent>
         </Card>
 

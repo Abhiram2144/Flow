@@ -1,8 +1,3 @@
-"""
-PDF to CSV normalization for bank statements.
-
-STRICT PREPROCESSING STEP - deterministic, rule-based, explainable.
-"""
 
 import pdfplumber
 import re
@@ -39,26 +34,6 @@ class BankStatementParser:
 
     @staticmethod
     def parse_pdf_to_csv(pdf_bytes: bytes) -> str:
-        """
-        Convert bank statement PDF to CSV string.
-        
-        ERROR HANDLING (DETERMINISTIC):
-        - Unreadable PDF: Return empty CSV (header only)
-        - No transactions: Return empty CSV (header only)
-        - Malformed rows: Skip, continue processing
-        - No date range detected: Process all valid rows
-        
-        FILTERING:
-        - Transactions filtered to "last month" where possible
-        - If no clear date range, all valid rows accepted
-        
-        Args:
-            pdf_bytes: Raw PDF file bytes
-            
-        Returns:
-            CSV string with format: date,amount,merchant
-            Returns header-only if parsing fails or no transactions found
-        """
         try:
             with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
                 if len(pdf.pages) == 0:
@@ -89,14 +64,8 @@ class BankStatementParser:
                     logger.warning("No transactions matched in PDF text")
                     return "date,amount,merchant"
 
-                # Filter to last month only
-                transactions = BankStatementParser._filter_to_statement_period(transactions)
-                logger.info(f"After filtering: {len(transactions)} transactions")
-
-                if not transactions:
-                    # All filtered out
-                    logger.warning("All transactions filtered out")
-                    return "date,amount,merchant"
+                # ✅ KEEP FULL HISTORY (NO FILTERING)
+                logger.info(f"Keeping full transaction history: {len(transactions)} transactions")
 
                 # Convert to CSV
                 csv_lines = ["date,amount,merchant"]
@@ -114,15 +83,15 @@ class BankStatementParser:
     def _extract_transactions(text: str) -> List[Tuple[str, float, str]]:
         """
         Extract transaction rows from PDF text.
-        
+
         STATE-BASED PARSER for HSBC multi-line statements.
-        
+
         State machine:
         1. Detect date → set current_date
         2. Detect debit marker (VIS, BP, OBP, CARD, CONTACTLESS, ))) → finalize previous, start new transaction
         3. Detect amount → finalize current transaction
         4. Accumulate merchant lines between markers
-        
+
         Returns:
             List of (date, amount, merchant) tuples
         """
@@ -136,18 +105,6 @@ class BankStatementParser:
         date_pattern = re.compile(r"\b(\d{2}\s+[A-Za-z]{3}\s+\d{2})\b")  # 27 Oct 25
         debit_marker_pattern = re.compile(r"^(VIS|BP|OBP|CARD|CONTACTLESS|\)\)\))\s*(.+)")  # Debit prefixes or )))
         amount_pattern = re.compile(r"\b(\d+\.\d{2})\b")  # Standalone amount
-        
-        def finalize_transaction():
-            """Finalize current transaction if complete."""
-            nonlocal current_date, current_merchant_lines
-            
-            if current_date and current_merchant_lines:
-                merchant = " ".join(current_merchant_lines)
-                merchant = BankStatementParser._clean_merchant(merchant)
-                if merchant:
-                    # Return (date, merchant, lines) - amount will be extracted later
-                    return (current_date, merchant)
-            return None
 
         pending_transaction = None  # (date, merchant) waiting for amount
 
@@ -161,7 +118,7 @@ class BankStatementParser:
             if date_match:
                 current_date = BankStatementParser._normalize_date_hsbc(date_match.group(1))
                 # Don't reset merchant - date can appear inline with merchant
-                
+
                 # Check if this line also has a debit marker
                 remainder = line[date_match.end():].strip()
                 if remainder:
@@ -180,11 +137,6 @@ class BankStatementParser:
             # 2️⃣ Detect debit marker (transaction boundary)
             marker_match = debit_marker_pattern.match(line)
             if marker_match:
-                # Finalize previous transaction first
-                if pending_transaction:
-                    # We have a pending transaction but no amount yet - skip it
-                    pending_transaction = None
-                
                 # Start new transaction
                 marker_merchant = BankStatementParser._clean_merchant(marker_match.group(2))
                 if marker_merchant:
@@ -196,15 +148,15 @@ class BankStatementParser:
             if amount_match and current_date and current_merchant_lines:
                 amount_str = amount_match.group(1)
                 amount = float(amount_str)
-                
+
                 # Exclude CR (credit) transactions
                 if "CR" not in line and amount > 0:
                     merchant = " ".join(current_merchant_lines)
                     merchant = BankStatementParser._clean_merchant(merchant)
-                    
+
                     if merchant:
                         transactions.append((current_date, amount, merchant))
-                
+
                 # Reset merchant for next transaction
                 current_merchant_lines = []
                 continue
@@ -217,40 +169,10 @@ class BankStatementParser:
         transactions.sort(key=lambda x: x[0])
         return transactions
 
+    # ✅ DISABLED FILTER (PASSTHROUGH)
     @staticmethod
     def _filter_to_statement_period(transactions: List[Tuple[str, float, str]]) -> List[Tuple[str, float, str]]:
-        """
-        Filter transactions to statement period (typically last month).
-        
-        LOGIC:
-        - Detect date range from transaction dates
-        - Accept transactions within detected range
-        - If range is ambiguous, accept all transactions
-        
-        Returns:
-            Filtered list of (date, amount, merchant) tuples
-        """
-        if not transactions:
-            return []
-
-        # Extract dates
-        dates = [datetime.strptime(t[0], "%Y-%m-%d").date() for t in transactions]
-        min_date = min(dates)
-        max_date = max(dates)
-
-        # If date range is very large (> 45 days), assume it spans multiple months
-        # Filter to the LAST MONTH within the range
-        date_range = (max_date - min_date).days
-
-        if date_range > 45:
-            # Likely statement covers multiple months
-            # Use last 30-35 days only
-            cutoff_date = max_date - timedelta(days=32)
-            transactions = [
-                t for t in transactions
-                if datetime.strptime(t[0], "%Y-%m-%d").date() >= cutoff_date
-            ]
-
+        # No filtering — keep full history
         return transactions
 
     @staticmethod
@@ -266,7 +188,7 @@ class BankStatementParser:
     def _parse_transaction_line(line: str) -> Optional[Tuple[str, float, str]]:
         """
         Parse a single transaction line.
-        
+
         Returns:
             (date, amount, merchant) or None if not a valid transaction
         """
@@ -316,8 +238,7 @@ class BankStatementParser:
         if not amount or amount <= 0:
             return None
 
-        # Extract merchant (text between date and amount, or after)
-        # Remove date and amount from line to get merchant
+        # Extract merchant
         merchant = line
         if date_match:
             merchant = merchant.replace(date_match.group(0), "", 1)
@@ -340,13 +261,9 @@ class BankStatementParser:
     @staticmethod
     def _clean_merchant(text: str) -> str:
         """Clean merchant description."""
-        # Remove extra whitespace
         text = " ".join(text.split())
-        # Remove currency symbols
         text = re.sub(r"[£$€]", "", text)
-        # Remove DR/CR markers
         text = re.sub(r"\b(DR|CR)\b", "", text)
-        # Trim
         text = text.strip()
         return text
 
@@ -373,6 +290,7 @@ class BankStatementParser:
 
         return None
 
+
     @staticmethod
     def _normalize_date_hsbc(date_str: str) -> Optional[str]:
         """
@@ -380,8 +298,19 @@ class BankStatementParser:
         HSBC format: '27 Oct 25' (DD MMM YY)
         """
         try:
-            # Parse with 2-digit year
             dt = datetime.strptime(date_str, "%d %b %y")
             return dt.strftime("%Y-%m-%d")
         except ValueError:
             return None
+
+# MAIN BLOCK - ensure this is outside the class definition
+if __name__ == "__main__":
+    import os
+    pdf_path = os.path.join(os.path.dirname(__file__), "statements.pdf")
+    try:
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+        csv_output = BankStatementParser.parse_pdf_to_csv(pdf_bytes)
+        print(csv_output)
+    except Exception as e:
+        print(f"Failed to parse PDF: {e}")
